@@ -950,6 +950,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 // ═══════════════════════════════════════════════════════
 const MOVIDESK_TOKEN_DEFAULT = '';
 const MOVIDESK_BASE = 'https://api.movidesk.com/public/v1';
+const JIRA_BASE_DIRECT = 'https://way2agile.atlassian.net/rest/api/3';
+const N8N_BASE = 'https://way2tecnologia.app.n8n.cloud/webhook';
+// Usar n8n como proxy para evitar CORS
+const USE_N8N = true;
 const ANTHROPIC_BASE = 'https://api.anthropic.com/v1/messages';
 const OPENAI_BASE = 'https://api.openai.com/v1/chat/completions';
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
@@ -1197,7 +1201,6 @@ function getDefaultDocs() {
 // INTEGRATIONS
 // ═══════════════════════════════════════════════════════
 async function searchJira(query, scope) {
-  const token = storage.get('ph_token_jira') || JIRA_TOKEN_DEFAULT;
   const jqlMap = {
     'Telemetria': 'project = PowerHub AND labels = Telemetria',
     'SCDE': 'project = PowerHub AND labels = SCDE',
@@ -1207,8 +1210,10 @@ async function searchJira(query, scope) {
   const scopeFilter = jqlMap[scope] || 'project = PowerHub';
   const jql = `${scopeFilter} AND text ~ "${query.substring(0,80)}" AND statusCategory = Done ORDER BY updated DESC`;
   try {
-    const resp = await fetch(`${JIRA_BASE}/search?jql=${encodeURIComponent(jql)}&maxResults=5&fields=summary,description,resolution,status`, {
-      headers: { 'Authorization': 'Basic ' + btoa(JIRA_EMAIL_DEFAULT + ':' + token), 'Accept': 'application/json' }
+    const resp = await fetch(`${N8N_BASE}/jira-search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jql, fields: 'summary,description,resolution,status', maxResults: 5 })
     });
     if (!resp.ok) return null;
     const data = await resp.json();
@@ -1234,7 +1239,10 @@ async function searchCentralAjuda(query, scope) {
     if (!relevant.length) return null;
     const fetches = relevant.slice(0,2).map(async a => {
       try {
-        const resp = await fetch(`${MOVIDESK_BASE}/article/${a.id}?token=${storage.get('ph_token_movidesk') || MOVIDESK_TOKEN_DEFAULT}`, { headers: { 'Accept': 'application/json' } });
+        const resp = await fetch(`${N8N_BASE}/movidesk-kb`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ articleId: a.id })
+        });
         if (!resp.ok) return `- ${a.title}: (conteúdo indisponível)`;
         const data = await resp.json();
         const text = (data.contentHtml || data.content || '').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().substring(0,800);
@@ -1247,12 +1255,11 @@ async function searchCentralAjuda(query, scope) {
 }
 
 async function searchMovideskSimilar(query) {
-  const token = storage.get('ph_token_movidesk') || MOVIDESK_TOKEN_DEFAULT;
   try {
-    const resp = await fetch(
-      `${MOVIDESK_BASE}/tickets?token=${token}&$select=id,subject,serviceFirstLevelName,actions&$filter=status eq 'Resolvido'&$top=3&$search=${encodeURIComponent(query.substring(0,60))}`,
-      { headers: { 'Accept': 'application/json' } }
-    );
+    const resp = await fetch(`${N8N_BASE}/movidesk-search`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: query.substring(0,60) })
+    });
     if (!resp.ok) return null;
     const data = await resp.json();
     if (!data?.length) return null;
@@ -1381,7 +1388,10 @@ async function vincularTicket() {
   setStatusPill('loading','Carregando ticket...');
   try {
     const token = storage.get('ph_token_movidesk') || MOVIDESK_TOKEN_DEFAULT;
-    const resp = await fetch(`${MOVIDESK_BASE}/tickets?token=${token}&id=${encodeURIComponent(val)}&$select=id,subject,createdDate,lastUpdate,status,serviceFirstLevelName,actions`);
+    const resp = await fetch(`${N8N_BASE}/movidesk-ticket`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticketId: val })
+    });
     if (resp.ok) {
       const data = await resp.json();
       const ticket = Array.isArray(data) ? data[0] : data;
@@ -1532,10 +1542,9 @@ async function salvarResolucao() {
 
   if (ticketLinked && ticketData) {
     const token = storage.get('ph_token_movidesk') || MOVIDESK_TOKEN_DEFAULT;
-    fetch(`${MOVIDESK_BASE}/tickets?token=${token}`, {
-      method:'PATCH',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ id: ticketData.id, actions:[{type:'Internal',description:resolutionText,isPublic:false}] })
+    fetch(`${N8N_BASE}/movidesk-action`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticketId: ticketData.id, description: resolutionText })
     }).catch(()=>{});
   }
 
@@ -1572,9 +1581,9 @@ function confirmarResolucaoManual() {
   sessions.push(session); storage.set('ph_sessions',sessions);
   if (ticketLinked && ticketData) {
     const token = storage.get('ph_token_movidesk')||MOVIDESK_TOKEN_DEFAULT;
-    fetch(`${MOVIDESK_BASE}/tickets?token=${token}`,{
-      method:'PATCH', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({id:ticketData.id,actions:[{type:'Internal',description:`[Agente PowerHub]\nResolução manual:\n${text}`,isPublic:false}]})
+    fetch(`${N8N_BASE}/movidesk-action`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticketId: ticketData.id, description: `[Agente PowerHub]\nResolução manual:\n${text}` })
     }).catch(()=>{});
   }
   closeResolveModal(); renderSessions(); updateAdminKPIs(); novaSession();
@@ -2013,20 +2022,12 @@ async function fetchMovideskFields() {
   if (status) status.textContent = 'Consultando API do Movidesk...';
 
   try {
-    // Buscar serviços
-    const svcResp = await fetch(`${MOVIDESK_BASE}/services?token=${token}&$select=id,name,parentServiceId,defaultCategory,defaultUrgency,categories,isActive&$filter=isActive eq true`, { headers: { 'Accept': 'application/json' } });
-    let services = [];
+    // Buscar campos via n8n
+    const svcResp = await fetch(`${N8N_BASE}/movidesk-fields`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
+    });
+    let services = [], urgencies = [], categories = [];
     if (svcResp.ok) { services = await svcResp.json(); }
-
-    // Buscar urgências via tickets API
-    const urgResp = await fetch(`${MOVIDESK_BASE}/tickets/urgencies?token=${token}`, { headers: { 'Accept': 'application/json' } });
-    let urgencies = [];
-    if (urgResp.ok) { urgencies = await urgResp.json(); }
-
-    // Buscar categorias via tickets API
-    const catResp = await fetch(`${MOVIDESK_BASE}/tickets/categories?token=${token}`, { headers: { 'Accept': 'application/json' } });
-    let categories = [];
-    if (catResp.ok) { categories = await catResp.json(); }
 
     mvFields = { services, categories, urgencies, fetchedAt: new Date().toISOString() };
     storage.set('ph_mv_fields', mvFields);
