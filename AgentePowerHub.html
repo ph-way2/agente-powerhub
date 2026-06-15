@@ -915,14 +915,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/></svg>
             Catálogo de Serviços e Classificações
           </div>
-          <p style="font-size:12px;color:var(--text-2);margin-bottom:10px;line-height:1.6">Estes campos são buscados diretamente da API do Movidesk e usados pelo agente para sugerir a classificação correta de cada ticket. Atualize sempre que o catálogo mudar.</p>
-          <div style="font-size:11px;color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:var(--radius-xs);padding:7px 10px;margin-bottom:12px">⚠ A busca funciona quando o agente estiver hospedado no SharePoint ou Stage. Não funciona abrindo o arquivo local (file://).</div>
-          <button onclick="fetchMovideskFields()" id="fetch-mv-btn" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:8px 16px;border-radius:var(--radius-s);background:var(--accent);color:#fff;border:none;cursor:pointer;margin-bottom:16px">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
-            Buscar do Movidesk agora
-          </button>
-          <div id="mv-fields-status" style="font-size:11px;color:var(--text-3);margin-bottom:12px"></div>
-          <div id="mv-fields-preview" style="font-size:12px;color:var(--text-2)"></div>
+          <p style="font-size:12px;color:var(--text-2);margin-bottom:14px;line-height:1.6">Catálogo de classificação usado pelo agente para sugerir Serviço, Escopo, Categoria, Subcategoria e Urgência em cada ticket. Para atualizar, edite o arquivo HTML com as novas opções.</p>
+          <div id="mv-fields-preview"></div>
         </div>
       </div>
 
@@ -2027,12 +2021,16 @@ async function fetchMovideskFields() {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
     });
     let services = [], urgencies = [], categories = [];
-    if (svcResp.ok) { services = await svcResp.json(); }
+    if (svcResp.ok) {
+      const raw = await svcResp.json();
+      // API retorna array diretamente ou objeto com value
+      services = Array.isArray(raw) ? raw : (raw.value || raw.items || []);
+    }
 
     mvFields = { services, categories, urgencies, fetchedAt: new Date().toISOString() };
     storage.set('ph_mv_fields', mvFields);
 
-    if (status) status.innerHTML = `<span style="color:var(--green)">✓ Atualizado em ${new Date().toLocaleString('pt-BR')} — ${services.length} serviços, ${categories.length} categorias, ${urgencies.length} urgências</span>`;
+    if (status) status.innerHTML = `<span style="color:var(--green)">✓ Atualizado em ${new Date().toLocaleString('pt-BR')} — ${services.length} serviço(s) carregado(s)</span>`;
     renderMvFieldsPreview();
   } catch(e) {
     if (status) status.innerHTML = `<span style="color:var(--red)">⚠ Erro ao buscar: ${e.message}</span>`;
@@ -2042,42 +2040,75 @@ async function fetchMovideskFields() {
 }
 
 function renderMvFieldsPreview() {
-  const saved = storage.get('ph_mv_fields');
-  if (saved) mvFields = saved;
   const el = document.getElementById('mv-fields-preview');
-  const status = document.getElementById('mv-fields-status');
   if (!el) return;
-  if (!mvFields.services?.length) {
-    el.innerHTML = '<div style="color:var(--text-3);font-size:12px">Nenhum campo carregado. Clique em "Buscar do Movidesk agora".</div>';
-    return;
-  }
-  if (status && mvFields.fetchedAt) {
-    status.innerHTML = `<span style="color:var(--green)">✓ Último fetch: ${new Date(mvFields.fetchedAt).toLocaleString('pt-BR')} — ${mvFields.services.length} serviços</span>`;
-  }
-  // Montar árvore de serviços
-  const roots = mvFields.services.filter(s => !s.parentServiceId);
-  const children = id => mvFields.services.filter(s => s.parentServiceId === id);
-  const renderSvc = (s, depth=0) => {
-    const cats = s.categories?.length ? s.categories.join(', ') : s.defaultCategory || '—';
-    const urg = s.defaultUrgency || '—';
-    const ch = children(s.id);
-    return `<div style="padding:6px 10px ${ch.length?'2px':'6px'} ${10+depth*16}px;border-left:${depth>0?'2px solid var(--border)':'none'};margin-left:${depth>0?'10px':'0'};${depth===0?'background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-xs);margin-bottom:6px':''}">
-      <div style="font-size:12px;font-weight:${depth===0?'600':'500'};color:${depth===0?'var(--text)':'var(--text-2)'};">${s.name}</div>
-      <div style="font-size:10px;color:var(--text-3);margin-top:1px">Categorias: ${cats} · Urgência padrão: ${urg}</div>
-      ${ch.map(c => renderSvc(c, depth+1)).join('')}
+  const renderSection = (title, items, color) => `
+    <div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">${title}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">${items.map(i=>`<span style="font-size:11px;padding:2px 8px;border-radius:4px;background:var(--bg);border:1px solid var(--border);color:var(--text-2)">${i}</span>`).join('')}</div>
     </div>`;
-  };
-  el.innerHTML = roots.map(s => renderSvc(s)).join('') ||
-    `<div style="font-size:12px;color:var(--text-2)">${mvFields.services.map(s=>`<div style="padding:4px 0;border-bottom:1px solid var(--border)">${s.name} — ${s.defaultCategory||'sem categoria'}</div>`).join('')}</div>`;
+  el.innerHTML =
+    renderSection('Serviços', MV_CATALOG.servicos.map(s=>`PowerHub > ${s.opcao}`)) +
+    renderSection('Escopos', MV_CATALOG.escopos) +
+    renderSection('Urgências', MV_CATALOG.urgencias) +
+    renderSection('Categorias', MV_CATALOG.categorias) +
+    `<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Subcategorias</div>` +
+    Object.entries(MV_CATALOG.subcategorias).map(([cat,subs])=>`
+      <div style="margin-bottom:6px;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-xs)">
+        <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:4px">${cat}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:3px">${subs.map(s=>`<span style="font-size:10px;padding:1px 6px;border-radius:3px;background:var(--border);color:var(--text-2)">${s}</span>`).join('')}</div>
+      </div>`).join('') + '</div>';
 }
 
+// Catálogo de classificação do Movidesk — baseado no arquivo oficial
+const MV_CATALOG = {
+  servicos: [
+    { pai: 'PowerHub', opcao: 'Suporte' },
+    { pai: 'PowerHub', opcao: 'Implantação' }
+  ],
+  escopos: ['Gestão de Faturas','Medição Setorial','SCDE','Telemetria de Entrada'],
+  urgencias: ['Alta','Baixa','Média','Urgente'],
+  categorias: [
+    '4Docs',
+    'Documentação e Processos Internos',
+    'Gestão de Acessos e Configurações',
+    'Gestão de Dados e Dashboards',
+    'Gestão de Equipamentos',
+    'Jira',
+    'Módulos e Ferramentas',
+    'Suporte Técnico N3 (Desenvolvimento)'
+  ],
+  subcategorias: {
+    '4Docs': ['Bot','Bug','Feature'],
+    'Documentação e Processos Internos': ['Cancelamento','Comercial','Comunicação Concessionária','Customer Success (CS)','Documentação de Clientes','Documentação Interna','Gestão e Faturamento','Novo Cliente','Piloto/Demonstração'],
+    'Gestão de Acessos e Configurações': ['Alarmes/Notificações','Configurações do Site','Exclusão/Adição de Site','Novo Usuário','Reset de Senha','SharePoint'],
+    'Gestão de Dados e Dashboards': ['Ajuste de Dados','Análise de Dados','Importação histórica','Processamento/Reprocessamento de Faturas e Dados SCDE'],
+    'Gestão de Equipamentos': ['Acessórios','Devolução de Equipamento','Envio de Equipamento','Equipamento Offline','Extravio de Equipamento','Troca de Equipamento','Visita Técnica'],
+    'Jira': ['Parseamento de Faturas','Aplicações','PowerHub','Robôs de Captura de Faturas'],
+    'Módulos e Ferramentas': ['App','Dados & BI (Excel, Power BI, relatórios)','Exportação de Dados','Painéis Integrados','Potências de Ganho','Sistemas (Stage, PDC, PIM, Servidor, API)','Status de Faturas'],
+    'Suporte Técnico N3 (Desenvolvimento)': ['Dados & BI (Excel, Power BI, relatórios)','Divergências e Inconsistências de Dados','Módulos e Ferramentas','Plataforma PowerHub','Sistemas (PDC, PIM, Servidor, API)']
+  }
+};
+
 function getMvFieldsContext() {
-  const saved = storage.get('ph_mv_fields');
-  if (!saved?.services?.length) return '';
-  const services = saved.services.map(s => `- ${s.name}${s.parentServiceId?` (sub de ${saved.services.find(p=>p.id===s.parentServiceId)?.name||'?'})`:''}: categorias=[${(s.categories||[s.defaultCategory]).filter(Boolean).join(', ')}], urgência padrão=${s.defaultUrgency||'?'}`).join('\n');
-  const cats = saved.categories?.length ? saved.categories.join(', ') : '';
-  const urgs = saved.urgencies?.length ? saved.urgencies.join(', ') : '';
-  return `\n[CATÁLOGO MOVIDESK — use para SUGESTÃO DE CLASSIFICAÇÃO]\nServiços disponíveis:\n${services}${cats?'\nCategorias: '+cats:''}${urgs?'\nUrgências: '+urgs:''}`;
+  const svcs = MV_CATALOG.servicos.map(s => `- PowerHub > ${s.opcao}`).join('\n');
+  const escs = MV_CATALOG.escopos.join(', ');
+  const cats = MV_CATALOG.categorias.join(', ');
+  const urgs = MV_CATALOG.urgencias.join(', ');
+  const subcats = Object.entries(MV_CATALOG.subcategorias)
+    .map(([cat, subs]) => `  ${cat}: ${subs.join(', ')}`)
+    .join('\n');
+  return `
+[CATÁLOGO DE CLASSIFICAÇÃO MOVIDESK — use para SUGESTÃO DE CLASSIFICAÇÃO]
+Serviço (sempre PowerHub + opção):
+${svcs}
+Escopos disponíveis: ${escs}
+Urgências: ${urgs}
+Categorias: ${cats}
+Subcategorias por categoria:
+${subcats}
+
+Ao sugerir classificação, indique: Serviço, Escopo, Categoria, Subcategoria e Urgência.`;
 }
 
 function renderSessions() {
