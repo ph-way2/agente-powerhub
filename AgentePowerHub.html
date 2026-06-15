@@ -1,0 +1,2176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agente PowerHub</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2 A14 14 0 1 1 15.99 2 Z' fill='none' stroke='%23F5A623' stroke-width='3.5' opacity='0.3'/%3E%3Cpath d='M16 2 A14 14 0 1 1 3.5 21' fill='none' stroke='%23F5A623' stroke-width='3.5' stroke-linecap='round'/%3E%3Crect x='9' y='14' width='3.5' height='8' rx='1.2' fill='%23F5A623'/%3E%3Crect x='14.2' y='10' width='3.5' height='12' rx='1.2' fill='%23F5A623'/%3E%3Crect x='19.5' y='12' width='3.5' height='10' rx='1.2' fill='%23F5A623'/%3E%3C/svg%3E">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F7F8FA;--surface:#fff;--border:#E8EBF0;--border-s:#D1D9E0;
+  --text:#0F1923;--text-2:#4A5568;--text-3:#8C9BAB;
+  --accent:#F5A623;--accent-d:#D9911A;--accent-bg:#FFF8EC;--accent-border:#FCDFA0;
+  --purple:#6D28D9;--purple-bg:#F5F3FF;--purple-border:#DDD6FE;
+  --green:#059669;--green-bg:#ECFDF5;--green-border:#6EE7B7;
+  --blue:#2563EB;--blue-bg:#EFF6FF;--blue-border:#BFDBFE;
+  --red:#DC2626;--red-bg:#FEF2F2;--red-border:#FECACA;
+  --amber:#D97706;--amber-bg:#FFFBEB;--amber-border:#FDE68A;
+  --sidebar:#0C1A2E;--sidebar-hover:#162436;--sidebar-active:rgba(245,166,35,.10);
+  --radius:10px;--radius-s:7px;--radius-xs:5px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-m:0 4px 16px rgba(0,0,0,.08);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;font-size:13px}
+
+/* ── LOGIN SCREEN ── */
+#login-screen{position:fixed;inset:0;background:var(--sidebar);display:flex;align-items:center;justify-content:center;z-index:1000}
+.login-card{background:var(--surface);border-radius:16px;padding:36px 40px;width:360px;box-shadow:var(--shadow-m)}
+.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+.login-logo-mark{width:36px;height:36px;background:var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center}
+.login-logo-text{font-size:16px;font-weight:600;color:var(--text)}.login-logo-text span{color:var(--accent)}
+.login-sub{font-size:11px;color:var(--text-3);margin-top:2px;font-weight:400}
+.login-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px}
+.login-desc{font-size:12px;color:var(--text-2);margin-bottom:24px;line-height:1.5}
+.login-field{margin-bottom:14px}
+.login-label{font-size:11px;font-weight:500;color:var(--text-2);margin-bottom:5px;display:block}
+.login-input{width:100%;border:1.5px solid var(--border);border-radius:var(--radius-s);padding:9px 12px;font-size:13px;color:var(--text);font-family:inherit;outline:none;transition:.15s;background:var(--bg)}
+.login-input:focus{border-color:var(--accent);background:var(--surface)}
+.login-btn{width:100%;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-s);font-size:13px;font-weight:600;cursor:pointer;margin-top:8px;transition:.15s}
+.login-btn:hover{background:var(--accent-d)}
+.login-note{font-size:11px;color:var(--text-3);text-align:center;margin-top:16px;line-height:1.5}
+
+/* ── APP SHELL ── */
+.app{display:flex;flex:1;min-height:0}
+
+/* ── SIDEBAR ── */
+.sidebar{width:228px;background:var(--sidebar);display:flex;flex-direction:column;flex-shrink:0}
+.sb-logo{padding:14px 16px 12px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;gap:9px}
+.sb-logo-mark{width:30px;height:30px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-logo-text{font-size:13px;font-weight:600;color:#F1F5F9}.sb-logo-text span{color:var(--accent)}
+.sb-logo-sub{font-size:9px;color:#3D5068;text-transform:uppercase;letter-spacing:.7px;margin-top:1px}
+.mode-tabs{display:flex;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0}
+.mode-tab{flex:1;padding:9px 0;font-size:11px;font-weight:500;text-align:center;color:#4A6480;cursor:pointer;border-bottom:2px solid transparent;transition:.15s}
+.mode-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.sb-section{padding:12px 10px 4px}
+.sb-section-label{font-size:9px;font-weight:600;color:#253545;text-transform:uppercase;letter-spacing:.8px;padding:0 6px;margin-bottom:6px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:6px 10px;border-radius:var(--radius-xs);font-size:12px;color:#7A90A4;margin-bottom:1px;cursor:pointer;transition:.12s}
+.nav-item:hover{background:var(--sidebar-hover);color:#C8D5E0}
+.nav-item.active{background:var(--sidebar-active);color:var(--accent)}
+.nav-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.sess-item{padding:5px 10px;font-size:11px;color:#4A6480;border-radius:var(--radius-xs);margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;display:flex;align-items:center;gap:6px}
+.sess-item:hover{background:var(--sidebar-hover);color:#7A90A4}
+.sess-item.ok{color:#4ADE80}.sess-item.wait{color:#FCD34D}
+.new-sess-wrap{padding:8px 10px 6px}
+.new-sess-btn{width:100%;padding:8px 0;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-s);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:.15s}
+.new-sess-btn:hover{background:var(--accent-d)}
+.sb-footer{margin-top:auto;padding:10px 14px;border-top:1px solid rgba(255,255,255,.05);display:flex;align-items:center;justify-content:space-between}
+.sb-user{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.sb-av{width:26px;height:26px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.sb-user-info{flex:1;min-width:0}
+.sb-user-name{font-size:11px;color:#CBD5E1;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-user-role{font-size:9px;color:#3D5068;display:flex;align-items:center;gap:3px;margin-top:1px}
+.online-dot{width:4px;height:4px;background:#22C55E;border-radius:50%}
+.sb-admin-btn{font-size:10px;padding:3px 8px;border-radius:var(--radius-xs);background:#162436;color:#4A6480;border:1px solid #1E3448;cursor:pointer;white-space:nowrap}
+.sb-admin-btn:hover{color:#7A90A4}
+
+/* ── MAIN AREA ── */
+.main{flex:1;display:flex;flex-direction:column;min-width:0}
+
+/* ── CHAT HEADER ── */
+.chat-header{background:var(--surface);padding:10px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px}
+.chat-title-group{flex:1;min-width:0}
+.chat-title{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-sub{font-size:10px;color:var(--text-3);margin-top:1px}
+.h-right{display:flex;align-items:center;gap:8px}
+.status-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid;white-space:nowrap}
+.status-pill.online{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+.status-pill.consulta{background:var(--purple-bg);border-color:var(--purple-border);color:var(--purple)}
+.status-pill.waiting{background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber)}
+.status-pill.loading{background:var(--blue-bg);border-color:var(--blue-border);color:var(--blue)}
+.sdot{width:5px;height:5px;border-radius:50%}
+.sdot.online{background:var(--green);animation:pulse 2s infinite}
+.sdot.consulta{background:var(--purple)}
+.sdot.waiting{background:var(--amber)}
+.sdot.loading{background:var(--blue);animation:spin .8s linear infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.end-btn{font-size:11px;font-weight:500;padding:5px 13px;border-radius:var(--radius-s);border:1px solid;background:var(--surface);cursor:pointer;transition:.12s;white-space:nowrap}
+.end-btn.atend{border-color:var(--red-border);color:var(--red)}.end-btn.atend:hover{background:var(--red-bg)}
+.end-btn.consulta{border-color:var(--purple-border);color:var(--purple)}.end-btn.consulta:hover{background:var(--purple-bg)}
+
+/* ── TICKET BANNER ── */
+.ticket-banner{background:#060E1A;border-bottom:1px solid #1A2E45;padding:8px 20px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.ticket-banner.hidden{display:none}
+.tb-label{font-size:11px;color:#4A6480;white-space:nowrap;display:flex;align-items:center;gap:5px}
+.ticket-input{flex:1;background:#0A1628;border:1px solid #253545;border-radius:var(--radius-xs);padding:5px 10px;font-size:12px;color:#E2E8F0;outline:none;font-family:inherit;max-width:200px}
+.ticket-input:focus{border-color:var(--accent)}
+.ticket-input::placeholder{color:#3D5068}
+.ticket-link-btn{font-size:11px;padding:5px 12px;border-radius:var(--radius-xs);background:var(--accent);color:#fff;border:none;cursor:pointer;font-weight:500;white-space:nowrap}
+.ticket-badge{display:none;align-items:center;gap:6px;background:#0A1E35;border:1px solid #1A3A5C;border-radius:var(--radius-xs);padding:4px 10px;font-size:11px;color:#7DD3FC;flex:1}
+.ticket-badge.show{display:flex}
+.mv-dot{width:5px;height:5px;background:#38BDF8;border-radius:50%;flex-shrink:0}
+
+/* ── MESSAGES ── */
+.messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
+.msg-row{display:flex;gap:10px;align-items:flex-start}
+.msg-row.user{flex-direction:row-reverse}
+.msg-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;margin-top:2px;font-weight:700}
+.msg-av.agent{background:var(--accent);color:#fff;padding:5px}
+.msg-av.agent.c{background:var(--purple)}
+.msg-av.user{background:var(--border);color:var(--text-2);font-size:10px}
+.bubble{max-width:76%;padding:10px 14px;font-size:13px;line-height:1.65;border-radius:4px 12px 12px 12px;box-shadow:var(--shadow)}
+.bubble.agent{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.bubble.user{background:var(--accent);color:#fff;border-radius:12px 4px 12px 12px;box-shadow:none}
+.bubble.system{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border);border-radius:var(--radius-s);font-size:11px;max-width:100%;text-align:center;padding:8px 14px;box-shadow:none}
+.bubble.c-system{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border);border-radius:var(--radius-s);font-size:11px;max-width:100%;text-align:center;padding:8px 14px;box-shadow:none}
+.bubble.ticket-ctx{background:var(--green-bg);border:1px solid var(--green-border);box-shadow:none}
+.typing{display:flex;gap:4px;align-items:center;padding:4px 0}
+.typing span{width:7px;height:7px;background:var(--border-s);border-radius:50%;animation:bounce 1.2s infinite}
+.typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+.src-section{margin-top:10px;padding-top:8px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:4px}
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 8px;border-radius:4px;border:1px solid;font-weight:500}
+.tag.doc{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-border)}
+.tag.jira{background:var(--purple-bg);color:var(--purple);border-color:var(--purple-border)}
+.tag.mv{background:var(--green-bg);color:var(--green);border-color:var(--green-border)}
+.tag.kb{background:var(--accent-bg);color:var(--accent-d);border-color:var(--accent-border)}
+
+/* ── WAITING OVERLAY ── */
+.waiting-overlay{position:absolute;inset:0;background:rgba(247,248,250,.95);display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;z-index:10}
+.w-icon{width:48px;height:48px;background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:12px;display:flex;align-items:center;justify-content:center}
+.w-title{font-size:14px;font-weight:600;color:var(--text)}
+.w-desc{font-size:12px;color:var(--text-2);text-align:center;max-width:260px;line-height:1.6}
+.w-actions{display:flex;gap:8px;margin-top:6px}
+.w-btn{font-size:12px;font-weight:500;padding:7px 16px;border-radius:var(--radius-s);cursor:pointer;border:none}
+.w-resolve{background:var(--accent);color:#fff}.w-new{background:var(--surface);color:var(--text-2);border:1px solid var(--border)}
+
+/* ── CONSULTA ── */
+.consulta-wrap{flex:1;display:flex;flex-direction:column;min-height:0;display:none}
+.consulta-tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.consulta-tab{flex:1;padding:10px 0;font-size:12px;font-weight:500;text-align:center;color:var(--text-3);cursor:pointer;border-bottom:2px solid transparent;transition:.15s}
+.consulta-tab.active{color:var(--purple);border-bottom-color:var(--purple)}
+.docs-panel{flex:1;overflow-y:auto;padding:16px 20px}
+.docs-scope-label{font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.7px;margin:16px 0 8px;display:flex;align-items:center;gap:8px}
+.docs-scope-label:first-child{margin-top:0}
+.docs-scope-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.doc-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-s);margin-bottom:6px;transition:.12s;cursor:pointer}
+.doc-item:hover{border-color:var(--border-s);box-shadow:var(--shadow)}
+.doc-icon{width:32px;height:32px;border-radius:var(--radius-xs);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+.doc-info{flex:1;min-width:0}
+.doc-name{font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc-meta{font-size:10px;color:var(--text-3);margin-top:1px}
+.doc-open-btn{font-size:10px;padding:4px 10px;border-radius:var(--radius-xs);background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border);cursor:pointer;flex-shrink:0;white-space:nowrap}
+
+/* ── INPUT AREA ── */
+.input-area{background:var(--surface);border-top:1px solid var(--border);padding:10px 16px 12px;flex-shrink:0}
+.scope-pills{display:flex;gap:4px;margin-bottom:9px;flex-wrap:wrap}
+.spill{font-size:10px;font-weight:500;padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:var(--bg);color:var(--text-2);cursor:pointer;transition:.12s}
+.spill:hover{border-color:var(--border-s)}
+.spill.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.input-row{display:flex;gap:8px;align-items:flex-end}
+.msg-input{flex:1;border:1.5px solid var(--border);border-radius:var(--radius-s);padding:9px 12px;font-size:13px;color:var(--text);font-family:inherit;resize:none;max-height:120px;outline:none;transition:.15s;line-height:1.5;background:var(--bg)}
+.msg-input:focus{border-color:var(--accent);background:var(--surface)}
+.msg-input::placeholder{color:var(--text-3)}
+.send-btn{width:36px;height:36px;border-radius:var(--radius-s);background:var(--accent);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s}
+.send-btn:hover{background:var(--accent-d)}.send-btn:disabled{opacity:.4;cursor:default}
+.hint-row{display:flex;align-items:center;gap:6px;margin-top:7px;font-size:10px;color:var(--text-3)}
+.hbadge{font-size:9px;font-weight:600;padding:1px 6px;border-radius:4px;background:var(--border);color:var(--text-3)}
+.hbadge.c{background:var(--purple-bg);color:var(--purple)}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:100;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:14px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+.modal-header{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:14px;font-weight:600;color:var(--text)}
+.modal-close{width:28px;height:28px;border-radius:6px;background:var(--bg);border:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-3)}
+.modal-body{padding:20px 22px}
+.m-section{margin-bottom:18px}
+.m-label{font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.trb{border:1px solid var(--border);border-radius:var(--radius-s);padding:12px 14px;display:flex;align-items:flex-start;gap:10px;transition:.2s}
+.trb.ok{border-color:var(--green-border);background:var(--green-bg)}
+.trb-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.trb-info{flex:1}.trb-label{font-size:12px;font-weight:600;color:var(--text-2)}
+.trb-label.ok{color:var(--green)}.trb-desc{font-size:11px;color:var(--text-3);margin-top:2px}
+.trb-desc.ok{color:var(--green)}.trb-val{display:none;font-size:11px;font-weight:600;color:var(--green);margin-top:4px}
+.res-options{display:flex;flex-direction:column;gap:8px}
+.res-option{border:1.5px solid var(--border);border-radius:var(--radius-s);padding:12px 14px;cursor:pointer;transition:.12s}
+.res-option:hover{border-color:var(--border-s);background:var(--bg)}
+.res-option.sel-agent{border-color:var(--green-border);background:var(--green-bg)}
+.res-option.sel-own{border-color:var(--purple-border);background:var(--purple-bg)}
+.res-opt-title{font-size:12px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;margin-bottom:2px}
+.res-opt-desc{font-size:11px;color:var(--text-3)}
+.m-input{width:100%;border:1.5px solid var(--border);border-radius:var(--radius-s);padding:8px 11px;font-size:12px;color:var(--text);font-family:inherit;outline:none;resize:vertical;transition:.15s}
+.m-input:focus{border-color:var(--accent)}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.btn-cancel{font-size:12px;font-weight:500;padding:7px 16px;border-radius:var(--radius-s);background:var(--bg);color:var(--text-2);border:1px solid var(--border);cursor:pointer}
+.btn-save{font-size:12px;font-weight:600;padding:7px 18px;border-radius:var(--radius-s);background:var(--accent);color:#fff;border:none;cursor:pointer;transition:.15s}
+.btn-save:hover{background:var(--accent-d)}.btn-save:disabled{opacity:.4;cursor:default}
+
+/* ── ADMIN PANEL ── */
+.admin-screen{position:fixed;inset:0;background:var(--bg);z-index:200;display:none;flex-direction:column}
+.admin-screen.open{display:flex}
+.admin-topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:52px;flex-shrink:0}
+.admin-topbar-left{display:flex;align-items:center;gap:12px}
+.admin-back-btn{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--text-2);cursor:pointer;padding:5px 10px;border-radius:var(--radius-xs);border:1px solid var(--border);background:var(--bg);transition:.12s}
+.admin-back-btn:hover{background:var(--border)}
+.admin-title{font-size:14px;font-weight:600;color:var(--text)}
+.admin-layout{display:flex;flex:1;min-height:0}
+.admin-nav{width:200px;background:var(--surface);border-right:1px solid var(--border);padding:16px 10px;flex-shrink:0}
+.admin-nav-item{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:var(--radius-s);font-size:12px;color:var(--text-2);cursor:pointer;margin-bottom:2px;transition:.12s;position:relative}
+.admin-nav-item:hover{background:var(--bg);color:var(--text)}
+.admin-nav-item.active{background:var(--accent-bg);color:var(--accent-d);font-weight:500}
+.admin-body{flex:1;overflow-y:auto;padding:24px}
+.admin-view{display:none}
+.admin-panel{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:20px 22px;margin-bottom:16px}
+.admin-panel-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:7px}
+.a-sec{margin-bottom:20px}
+.a-sec-title{font-size:11px;font-weight:600;color:var(--text-2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.a-sec-title span{font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-3)}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.kpi-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-s);padding:12px 14px}
+.kpi-val{font-size:22px;font-weight:700;color:var(--text)}
+.kpi-label{font-size:10px;color:var(--text-3);margin-top:2px}
+.res-card{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-s);margin-bottom:6px}
+.rsd{width:4px;height:36px;border-radius:2px;flex-shrink:0}
+.rsc{flex:1;min-width:0}.rsc-title{font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rsc-meta{font-size:10px;color:var(--text-3);margin-top:2px;display:flex;align-items:center;gap:4px}
+.rsc-actions{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.pill{font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px}
+.pill.agent{background:var(--green-bg);color:var(--green)}.pill.own{background:var(--purple-bg);color:var(--purple)}.pill.waiting{background:var(--amber-bg);color:var(--amber)}
+.approve-btn,.review-btn{font-size:10px;padding:3px 8px;border-radius:4px;cursor:pointer;border:1px solid;font-weight:500}
+.approve-btn{background:var(--green-bg);color:var(--green);border-color:var(--green-border)}
+.review-btn{background:var(--bg);color:var(--text-2);border-color:var(--border)}
+.token-block{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-s);padding:14px 16px;margin-bottom:10px}
+.token-block.active-engine{border-color:var(--accent-border);background:var(--accent-bg)}
+.token-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.token-name{font-size:12px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px}
+.token-badge{font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.token-status{font-size:10px;padding:2px 8px;border-radius:20px;border:1px solid}
+.token-row{display:flex;gap:6px;align-items:center}
+.token-input{flex:1;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-xs);padding:7px 10px;font-size:12px;color:var(--text);outline:none;font-family:'Courier New',monospace}
+.token-input:focus{border-color:var(--accent)}
+.token-save-btn{font-size:11px;font-weight:600;padding:7px 14px;border-radius:var(--radius-xs);background:var(--accent);color:#fff;border:none;cursor:pointer;white-space:nowrap}
+.token-eye-btn{width:32px;height:32px;border-radius:var(--radius-xs);background:var(--surface);border:1.5px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-3);flex-shrink:0}
+.token-hint{font-size:10px;color:var(--text-3);margin-top:6px}
+.engine-selector{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.engine-opt{flex:1;min-width:130px;border:1.5px solid var(--border);border-radius:var(--radius-s);padding:10px 12px;cursor:pointer;transition:.12s;display:flex;align-items:center;gap:8px}
+.engine-opt:hover{border-color:var(--border-s)}
+.engine-opt.active{border-color:var(--accent);background:var(--accent-bg)}
+.engine-opt-label{font-size:12px;font-weight:600;color:var(--text)}
+.engine-opt-sub{font-size:10px;color:var(--text-3);margin-top:1px}
+.engine-opt.active .engine-opt-sub{color:var(--green)}
+.doc-admin-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-s);margin-bottom:6px}
+.doc-admin-info{flex:1;min-width:0}
+.doc-admin-name{font-size:12px;font-weight:500;color:var(--text)}
+.doc-admin-meta{font-size:10px;color:var(--text-3);margin-top:1px}
+.doc-admin-actions{display:flex;gap:4px;flex-shrink:0}
+.doc-edit-btn,.doc-del-btn{font-size:10px;padding:3px 9px;border-radius:4px;cursor:pointer;border:1px solid;font-weight:500}
+.doc-edit-btn{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-border)}
+.doc-del-btn{background:var(--bg);color:var(--text-2);border-color:var(--border)}
+.scope-badge{display:inline-block;font-size:9px;font-weight:600;padding:1px 6px;border-radius:4px;background:var(--border);color:var(--text-2);margin-left:4px}
+.add-doc-form{background:var(--bg);border:1.5px dashed var(--border-s);border-radius:var(--radius-s);padding:14px 16px;margin-top:8px}
+.add-doc-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px}
+.field-row{display:flex;gap:8px;margin-bottom:8px}
+.field-input{flex:1;border:1.5px solid var(--border);border-radius:var(--radius-xs);padding:7px 10px;font-size:12px;color:var(--text);font-family:inherit;outline:none}
+.field-input:focus{border-color:var(--accent)}
+.field-select{flex:1;border:1.5px solid var(--border);border-radius:var(--radius-xs);padding:7px 10px;font-size:12px;color:var(--text);font-family:inherit;outline:none;background:var(--surface);cursor:pointer}
+.add-doc-btn{font-size:11px;font-weight:600;padding:7px 14px;border-radius:var(--radius-xs);background:var(--accent);color:#fff;border:none;cursor:pointer}
+.users-table{width:100%;border-collapse:collapse;font-size:12px}
+.users-table th{text-align:left;padding:7px 10px;font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+.users-table td{padding:9px 10px;border-bottom:1px solid var(--border);color:var(--text)}
+
+
+/* ── NOT FOUND BANNER ── */
+.not-found-banner{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:var(--radius-s);padding:14px 16px;margin:0 0 8px}
+.nfb-title{font-size:13px;font-weight:600;color:var(--amber);display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.nfb-desc{font-size:12px;color:var(--text-2);margin-bottom:12px;line-height:1.5}
+.nfb-actions{display:flex;gap:8px;flex-wrap:wrap}
+.nfb-btn{font-size:11px;font-weight:600;padding:6px 14px;border-radius:var(--radius-s);cursor:pointer;border:none;transition:.12s}
+.nfb-btn.primary{background:var(--accent);color:#fff}
+.nfb-btn.primary:hover{background:var(--accent-d)}
+.nfb-btn.secondary{background:var(--surface);color:var(--text-2);border:1px solid var(--border)}
+.nfb-btn.secondary:hover{background:var(--bg)}
+.nfb-btn.purple{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-border)}
+.nfb-btn.purple:hover{background:#EDE9FE}
+
+/* ── SINALIZAÇÕES ADMIN ── */
+.admin-badge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;background:var(--red);color:#fff;border-radius:9px;font-size:10px;font-weight:700;margin-left:6px}
+.flag-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-s);padding:12px 14px;margin-bottom:8px}
+.flag-card.pending{border-left:3px solid var(--amber)}
+.flag-card.resolved{border-left:3px solid var(--green);opacity:.7}
+.flag-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.flag-title{font-size:12px;font-weight:600;color:var(--text)}
+.flag-badge{font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.flag-badge.pending{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
+.flag-badge.resolved{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.flag-meta{font-size:10px;color:var(--text-3);margin-bottom:6px}
+.flag-desc{font-size:11px;color:var(--text-2);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xs);padding:7px 10px;line-height:1.5}
+.flag-actions{display:flex;gap:6px;margin-top:8px}
+.flag-resolve-btn{font-size:10px;font-weight:600;padding:4px 12px;border-radius:var(--radius-xs);background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);cursor:pointer}
+.flag-dismiss-btn{font-size:10px;padding:4px 10px;border-radius:var(--radius-xs);background:var(--bg);color:var(--text-3);border:1px solid var(--border);cursor:pointer}
+
+/* ── SUGGEST MODAL ── */
+#suggest-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:150;display:none;align-items:center;justify-content:center}
+#suggest-modal-overlay.open{display:flex}
+.suggest-modal{background:var(--surface);border-radius:14px;width:440px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.15);padding:24px}
+.sm-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px}
+.sm-desc{font-size:12px;color:var(--text-2);margin-bottom:16px;line-height:1.5}
+.sm-type-row{display:flex;gap:8px;margin-bottom:14px}
+.sm-type{flex:1;border:1.5px solid var(--border);border-radius:var(--radius-s);padding:10px 12px;cursor:pointer;transition:.12s;text-align:center}
+.sm-type:hover{border-color:var(--border-s)}
+.sm-type.active{border-color:var(--purple);background:var(--purple-bg)}
+.sm-type-label{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px}
+.sm-type-desc{font-size:10px;color:var(--text-3)}
+.sm-type.active .sm-type-desc{color:var(--purple)}
+.sm-input{width:100%;border:1.5px solid var(--border);border-radius:var(--radius-s);padding:9px 11px;font-size:12px;color:var(--text);font-family:inherit;outline:none;resize:vertical;min-height:80px;margin-bottom:14px}
+.sm-input:focus{border-color:var(--accent)}
+.sm-actions{display:flex;gap:8px;justify-content:flex-end}
+
+/* ── USERS ADMIN ── */
+.user-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-s);margin-bottom:6px}
+.user-av{width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.user-info{flex:1;min-width:0}
+.user-name{font-size:12px;font-weight:500;color:var(--text)}
+.user-email{font-size:10px;color:var(--text-3)}
+.user-role-badge{font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.user-role-badge.admin{background:var(--accent-bg);color:var(--accent-d);border:1px solid var(--accent-border)}
+.user-role-badge.analista{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-border)}
+.user-actions{display:flex;gap:4px;flex-shrink:0}
+.user-promote-btn,.user-demote-btn{font-size:10px;padding:3px 9px;border-radius:4px;cursor:pointer;border:1px solid;font-weight:500}
+.user-promote-btn{background:var(--accent-bg);color:var(--accent-d);border-color:var(--accent-border)}
+.user-demote-btn{background:var(--bg);color:var(--text-2);border-color:var(--border)}
+
+/* ── RESOLVE MODAL ── */
+#resolve-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:150;display:none;align-items:center;justify-content:center}
+#resolve-modal-overlay.open{display:flex}
+.resolve-modal{background:var(--surface);border-radius:14px;width:420px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.15);padding:22px 24px}
+.rm-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px}
+.rm-desc{font-size:12px;color:var(--text-2);margin-bottom:16px;line-height:1.5}
+.rm-input{width:100%;border:1.5px solid var(--border);border-radius:var(--radius-s);padding:9px 11px;font-size:12px;color:var(--text);font-family:inherit;outline:none;resize:vertical;min-height:80px;margin-bottom:14px}
+.rm-input:focus{border-color:var(--accent)}
+.rm-actions{display:flex;gap:8px;justify-content:flex-end}
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN ── -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-mark" style="background:transparent;padding:3px;width:42px;height:42px">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="36" height="36">
+  <!-- Anel externo -->
+  <path d="M16 2 A14 14 0 1 1 15.99 2 Z" fill="none" stroke="#F5A623" stroke-width="3.5" opacity="0.3"/>
+  <!-- Arco superior preenchido (aprox 3/4 do círculo) -->
+  <path d="M16 2 A14 14 0 1 1 3.5 21" fill="none" stroke="#F5A623" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Barras internas -->
+  <rect x="9" y="14" width="3.5" height="8" rx="1.2" fill="#F5A623"/>
+  <rect x="14.2" y="10" width="3.5" height="12" rx="1.2" fill="#F5A623"/>
+  <rect x="19.5" y="12" width="3.5" height="10" rx="1.2" fill="#F5A623"/>
+</svg>
+      </div>
+      <div>
+        <div class="login-logo-text"><span>Power</span>Hub Agent</div>
+        <div class="login-sub">Way2 Technology · Base de Conhecimento IA</div>
+      </div>
+    </div>
+    <div class="login-title">Identifique-se para continuar</div>
+    <div class="login-desc">Seus dados são usados apenas para registrar quem realizou o atendimento. Não é necessária senha.</div>
+    <div class="login-field">
+      <label class="login-label">Nome completo</label>
+      <input class="login-input" id="login-name" type="text" placeholder="Seu nome" autocomplete="name">
+    </div>
+    <div class="login-field">
+      <label class="login-label">E-mail corporativo</label>
+      <input class="login-input" id="login-email" type="email" placeholder="nome@way2.com.br" autocomplete="email">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Entrar no agente</button>
+    <div class="login-note">Seus dados ficam salvos neste navegador.<br>Não será solicitado novamente.</div>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div class="app" id="app" style="display:none">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-mark" style="background:transparent;padding:2px">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="26" height="26">
+  <!-- Anel externo -->
+  <path d="M16 2 A14 14 0 1 1 15.99 2 Z" fill="none" stroke="#F5A623" stroke-width="3.5" opacity="0.3"/>
+  <!-- Arco superior preenchido (aprox 3/4 do círculo) -->
+  <path d="M16 2 A14 14 0 1 1 3.5 21" fill="none" stroke="#F5A623" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Barras internas -->
+  <rect x="9" y="14" width="3.5" height="8" rx="1.2" fill="#F5A623"/>
+  <rect x="14.2" y="10" width="3.5" height="12" rx="1.2" fill="#F5A623"/>
+  <rect x="19.5" y="12" width="3.5" height="10" rx="1.2" fill="#F5A623"/>
+</svg>
+      </div>
+      <div>
+        <div class="sb-logo-text"><span>Power</span>Hub</div>
+        <div class="sb-logo-sub">Base de Conhecimento IA</div>
+      </div>
+    </div>
+
+    <div class="mode-tabs">
+      <div class="mode-tab active" id="tab-atend" onclick="setMode('atendimento')">Atendimento</div>
+      <div class="mode-tab" id="tab-cons" onclick="setMode('consulta')">Consulta</div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-label">Escopos</div>
+      <div class="nav-item active" id="nav-telemetria" onclick="setScope(this,'Telemetria')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;color:#F5A623"><path d="M2 12h2"/><path d="M20 12h2"/><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/></svg>Telemetria
+      </div>
+      <div class="nav-item" id="nav-scde" onclick="setScope(this,'SCDE')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="flex-shrink:0;color:#6D28D9"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>SCDE
+      </div>
+      <div class="nav-item" id="nav-setorial" onclick="setScope(this,'Setorial')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="flex-shrink:0;color:#EA580C"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Setorial
+      </div>
+      <div class="nav-item" id="nav-faturas" onclick="setScope(this,'Gestão de Faturas')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="flex-shrink:0;color:#2563EB"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>Gestão de Faturas
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-label">Geral</div>
+      <div class="nav-item" id="nav-geral" onclick="setScope(this,'Base Geral')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="flex-shrink:0;color:#64748B"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Base Geral
+      </div>
+      <div class="nav-item" id="nav-agente" onclick="setScope(this,'Sobre o Agente')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="flex-shrink:0;color:#F5A623"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Sobre o Agente
+      </div>
+    </div>
+
+    <div class="new-sess-wrap">
+      <button class="new-sess-btn" onclick="novaSession()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nova sessão
+      </button>
+    </div>
+
+    <div class="sb-section" style="flex:1;overflow-y:auto">
+      <div class="sb-section-label">Sessões</div>
+      <div id="sessions-list">
+        <div class="sess-item" style="color:#3D5068;font-style:italic">Nenhuma sessão ainda</div>
+      </div>
+    </div>
+
+    <div class="sb-footer">
+      <div class="sb-user">
+        <div class="sb-av" id="sb-av">?</div>
+        <div class="sb-user-info">
+          <div class="sb-user-name" id="sb-name">—</div>
+          <div class="sb-user-role">
+            <div class="online-dot"></div>
+            <span id="sb-role">via Stage</span>
+          </div>
+        </div>
+      </div>
+      <button class="sb-admin-btn" id="admin-toggle-btn" onclick="openAdmin()">Admin ⚙</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- TICKET BANNER -->
+    <div class="ticket-banner hidden" id="ticket-banner" style="display:none">
+      <div class="tb-label">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/></svg>
+        Ticket Movidesk
+      </div>
+      <input class="ticket-input" id="ticket-input" placeholder="Número do ticket..." type="text" onkeydown="if(event.key==='Enter')vincularTicket()">
+      <button class="ticket-link-btn" id="ticket-btn" onclick="vincularTicket()">Vincular</button>
+      <div class="ticket-badge" id="ticket-badge">
+        <div class="mv-dot"></div>
+        <span id="ticket-text">—</span>
+        <span style="margin-left:auto;cursor:pointer;color:#94A3B8;font-size:10px" onclick="desvincularTicket()">✕</span>
+      </div>
+    </div>
+
+    <!-- CHAT HEADER -->
+    <div class="chat-header">
+      <div class="chat-title-group">
+        <div class="chat-title" id="chat-title">Agente Telemetria</div>
+        <div class="chat-sub" id="chat-sub">Atendimento · Jira · Movidesk · Docs</div>
+      </div>
+      <div class="h-right">
+        <div class="status-pill online" id="status-pill">
+          <div class="sdot online" id="sdot"></div>
+          <span id="status-text">Online</span>
+        </div>
+        <button class="end-btn atend" id="end-btn" onclick="openModal()">Encerrar</button>
+      </div>
+    </div>
+
+    <!-- ATENDIMENTO MESSAGES -->
+    <div style="flex:1;display:flex;flex-direction:column;min-height:0;position:relative" id="atend-wrap">
+      <div class="messages" id="msgs-atend">
+        <div class="msg-row">
+          <div class="msg-av agent" id="initial-agent-av" style="padding:5px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <div class="bubble agent">Olá! Estou pronto para ajudar com <strong>Telemetria</strong>.<br>Vincule o ticket Movidesk acima para começarmos.</div>
+        </div>
+      </div>
+      <div class="waiting-overlay" id="waiting-overlay">
+        <div class="w-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="w-title">Aguardando resolução</div>
+        <div class="w-desc">O agente não encontrou solução nas fontes disponíveis. Quando resolver externamente, registre aqui.</div>
+        <div class="w-actions">
+          <button class="w-btn w-resolve" onclick="openResolveModal()">Registrar resolução</button>
+          <button class="w-btn w-new" onclick="novaSession()">Nova sessão</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONSULTA WRAP -->
+    <div class="consulta-wrap" id="consulta-wrap">
+      <div class="consulta-tabs">
+        <div class="consulta-tab active" id="ctab-chat" onclick="setConsultaTab('chat')">Chat</div>
+        <div class="consulta-tab" id="ctab-docs" onclick="setConsultaTab('docs')">Documentos</div>
+      </div>
+      <div class="messages" id="msgs-consulta" style="display:flex">
+        <div class="bubble c-system">Modo <strong>Consulta</strong> ativo — Sem ticket obrigatório · Sessão não gera resolução</div>
+      </div>
+      <div class="docs-panel" id="docs-panel" style="display:none"></div>
+    </div>
+
+    <!-- INPUT -->
+    <div class="input-area">
+      <div class="scope-pills">
+        <span class="spill active" onclick="selectSpill(this,'Telemetria')">Telemetria</span>
+        <span class="spill" onclick="selectSpill(this,'SCDE')">SCDE</span>
+        <span class="spill" onclick="selectSpill(this,'Setorial')">Setorial</span>
+        <span class="spill" onclick="selectSpill(this,'Gestão de Faturas')">Faturas</span>
+        <span class="spill" onclick="selectSpill(this,'Base Geral')">Base Geral</span>
+      </div>
+      <div class="input-row">
+        <textarea class="msg-input" id="msg-input" rows="1" placeholder="Descreva o problema ou faça uma pergunta..." onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        <button class="send-btn" id="send-btn" onclick="sendMessage()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+      <div class="hint-row" id="hint-area">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+        Jira · Movidesk · Docs
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CLOSE MODAL ── -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Encerrar atendimento</div>
+      <button class="modal-close" onclick="closeModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="m-section">
+        <div class="m-label">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/></svg>
+          Ticket vinculado
+        </div>
+        <div class="trb" id="trb">
+          <div class="trb-icon" id="trb-icon">⚠️</div>
+          <div class="trb-info">
+            <div class="trb-label" id="trb-label">Ticket obrigatório para encerrar</div>
+            <div class="trb-desc" id="trb-desc">Vincule o ticket Movidesk antes de salvar.</div>
+            <div class="trb-val" id="trb-val"></div>
+          </div>
+        </div>
+      </div>
+      <div class="m-section">
+        <div class="m-label">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Como foi resolvido?
+        </div>
+        <div class="res-options">
+          <div class="res-option" id="opt-agent" onclick="selectResOption('agent')">
+            <div class="res-opt-title">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Resolvido pelo agente
+            </div>
+            <div class="res-opt-desc">A resposta do agente resolveu o chamado</div>
+            <div id="obs-agent-wrap" style="display:none;margin-top:10px">
+              <textarea class="m-input" id="obs-agent" rows="2" placeholder="Observações adicionais (opcional)..."></textarea>
+              <input class="m-input" id="jira-agent" placeholder="Link da issue Jira (opcional)" style="margin-top:6px;resize:none;height:auto;padding:7px 11px">
+            </div>
+          </div>
+          <div class="res-option" id="opt-own" onclick="selectResOption('own')">
+            <div class="res-opt-title">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Resolvido por outro meio
+            </div>
+            <div class="res-opt-desc">Resolução encontrada fora do agente</div>
+            <div id="desc-own-wrap" style="display:none;margin-top:10px">
+              <textarea class="m-input" id="desc-own" rows="3" placeholder="Descreva como foi resolvido..."></textarea>
+              <input class="m-input" id="jira-own" placeholder="Link da issue Jira (opcional)" style="margin-top:6px;resize:none;height:auto;padding:7px 11px">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" id="btn-save" onclick="salvarResolucao()" disabled>Encerrar e registrar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── SUGGEST MODAL ── -->
+<div id="suggest-modal-overlay">
+  <div class="suggest-modal">
+    <div class="sm-title">Informar ao Admin</div>
+    <div class="sm-desc">O agente não encontrou nas fontes disponíveis. Escolha como deseja sinalizar:</div>
+    <div class="sm-type-row">
+      <div class="sm-type active" id="sm-type-suggest" onclick="selectSuggestType('suggest')">
+        <div class="sm-type-label">💡 Sugestão</div>
+        <div class="sm-type-desc">Propor conteúdo para a base</div>
+      </div>
+      <div class="sm-type" id="sm-type-gap" onclick="selectSuggestType('gap')">
+        <div class="sm-type-label">⚠️ Lacuna</div>
+        <div class="sm-type-desc">Informar que conteúdo está faltando</div>
+      </div>
+    </div>
+    <textarea class="sm-input" id="suggest-text" placeholder="Descreva o que foi buscado e o que seria útil ter na base..."></textarea>
+    <div class="sm-actions">
+      <button class="btn-cancel" onclick="closeSuggestModal()">Cancelar</button>
+      <button class="btn-save" onclick="submitSuggestion()">Enviar ao Admin</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── RESOLVE MODAL ── -->
+<div id="resolve-modal-overlay">
+  <div class="resolve-modal">
+    <div class="rm-title">Registrar resolução manual</div>
+    <div class="rm-desc">Como o problema foi resolvido? Essa informação será salva como aprendizado para chamados futuros.</div>
+    <textarea class="rm-input" id="rm-text" placeholder="Descreva a solução encontrada..."></textarea>
+    <div class="rm-actions">
+      <button class="btn-cancel" onclick="closeResolveModal()">Cancelar</button>
+      <button class="btn-save" onclick="confirmarResolucaoManual()">Registrar e encerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── ADMIN SCREEN ── -->
+<div class="admin-screen" id="admin-overlay">
+  <div class="admin-topbar">
+    <div class="admin-topbar-left">
+      <button class="admin-back-btn" onclick="closeAdmin()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Voltar ao agente
+      </button>
+      <div class="admin-title">Painel Administrativo</div>
+    </div>
+    <div style="font-size:11px;color:var(--text-3)" id="admin-user-label"></div>
+  </div>
+  <div class="admin-layout">
+    <div class="admin-nav">
+      <div class="admin-nav-item active" id="anav-dashboard" onclick="setAdminTab('dashboard')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </div>
+      <div class="admin-nav-item" id="anav-docs" onclick="setAdminTab('docs')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Documentos
+      </div>
+      <div class="admin-nav-item" id="anav-tokens" onclick="setAdminTab('tokens')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Tokens & APIs
+      </div>
+      <div class="admin-nav-item" id="anav-movidesk" onclick="setAdminTab('movidesk')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/></svg>
+        Campos Movidesk
+      </div>
+      <div class="admin-nav-item" id="anav-usuarios" onclick="setAdminTab('usuarios')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Usuários
+      </div>
+      <div class="admin-nav-item" id="anav-flags" onclick="setAdminTab('flags')" style="position:relative">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        Sinalizações
+        <span class="admin-badge" id="flags-badge" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%)">0</span>
+      </div>
+    </div>
+    <div class="admin-body">
+
+      <!-- DASHBOARD -->
+      <div class="admin-view" id="view-dashboard">
+        <div class="admin-panel">
+          <div class="admin-panel-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Dashboard de atendimento
+          </div>
+          <div class="a-sec">
+            <div class="a-sec-title">KPIs de atendimento</div>
+            <div class="kpi-grid">
+              <div class="kpi-card">
+                <div class="kpi-val" id="kpi-total">0</div>
+                <div class="kpi-label">Resolvidos</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-val" id="kpi-pct">—</div>
+                <div class="kpi-label">Pelo agente</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-val" id="kpi-espera">0</div>
+                <div class="kpi-label">Em espera</div>
+              </div>
+            </div>
+          </div>
+          <div class="a-sec">
+            <div class="a-sec-title">Resoluções recentes <span id="res-subtitle"></span></div>
+            <div id="res-list-admin"><div style="color:var(--text-3);font-size:12px;padding:8px 0">Nenhuma resolução registrada ainda.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DOCS -->
+      <div class="admin-view" id="view-docs">
+        <div class="admin-panel">
+          <div class="admin-panel-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Base de documentos
+          </div>
+          <div id="docs-admin-list"></div>
+          <div class="add-doc-form" id="add-doc-form">
+            <div class="add-doc-title">Adicionar documento</div>
+            <div class="field-row">
+              <input class="field-input" id="new-doc-name" placeholder="Nome do documento">
+              <select class="field-select" id="new-doc-scope">
+                <option>Telemetria</option><option>SCDE</option><option>Setorial</option>
+                <option>Gestão de Faturas</option><option>Base Geral</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <input class="field-input" id="new-doc-url" placeholder="URL do documento (SharePoint, OneDrive...)">
+            </div>
+            <div class="field-row">
+              <input class="field-input" id="new-doc-kw" placeholder="Palavras-chave (separadas por vírgula)">
+            </div>
+            <button class="add-doc-btn" onclick="addDoc()">Adicionar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOKENS -->
+      <div class="admin-view" id="view-tokens">
+        <div class="admin-panel">
+          <div class="admin-panel-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Tokens & APIs
+          </div>
+          <div class="a-sec">
+          <div class="a-sec-title">Motor de IA</div>
+          <div class="engine-selector">
+            <div class="engine-opt active" id="eng-gemini" onclick="selectEngine('gemini')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <div>
+                <div class="engine-opt-label">Gemini Flash</div>
+                <div class="engine-opt-sub">Piloto ativo</div>
+              </div>
+            </div>
+            <div class="engine-opt" id="eng-anthropic" onclick="selectEngine('anthropic')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+              <div>
+                <div class="engine-opt-label">Claude (Anthropic)</div>
+                <div class="engine-opt-sub">Futuro</div>
+              </div>
+            </div>
+            <div class="engine-opt" id="eng-openai" onclick="selectEngine('openai')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 2v10l5 5"/></svg>
+              <div>
+                <div class="engine-opt-label">GPT-4o (OpenAI)</div>
+                <div class="engine-opt-sub">Futuro</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="a-sec">
+          <div class="a-sec-title">API Keys</div>
+
+          <div class="token-block active-engine">
+            <div class="token-head">
+              <div class="token-name">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                Gemini 2.5 Flash (Google)
+                <span class="token-badge">ATIVO</span>
+              </div>
+              <span class="token-status" id="status-gemini" style="background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber)">⏳ Aguardando</span>
+            </div>
+            <div class="token-row">
+              <input type="password" class="token-input" id="token-gemini" placeholder="AIza...">
+              <button class="token-save-btn" onclick="saveToken('gemini')">Salvar</button>
+              <button class="token-eye-btn" onclick="toggleTokenVisibility('gemini')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <div class="token-hint">aistudio.google.com → Get API Key → Create API key</div>
+          </div>
+
+          <div class="token-block">
+            <div class="token-head">
+              <div class="token-name">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/></svg>
+                Movidesk Token
+              </div>
+              <span class="token-status" id="status-movidesk" style="background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber)">⏳ Aguardando</span>
+            </div>
+            <div class="token-row">
+              <input type="password" class="token-input" id="token-movidesk" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+              <button class="token-save-btn" onclick="saveToken('movidesk')">Salvar</button>
+              <button class="token-eye-btn" onclick="toggleTokenVisibility('movidesk')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="token-block">
+            <div class="token-head">
+              <div class="token-name">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                Jira API Token
+              </div>
+              <span class="token-status" id="status-jira" style="background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber)">⏳ Aguardando</span>
+            </div>
+            <div class="token-row">
+              <input type="password" class="token-input" id="token-jira" placeholder="ATATT3x...">
+              <button class="token-save-btn" onclick="saveToken('jira')">Salvar</button>
+              <button class="token-eye-btn" onclick="toggleTokenVisibility('jira')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+            <div class="token-hint">Email Jira: <span id="jira-email-display" style="font-family:monospace">thaysi.roldan@way2.com.br</span></div>
+          </div>
+
+          <div class="token-block">
+            <div class="token-head">
+              <div class="token-name">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                Claude (Anthropic) — futuro
+              </div>
+              <span class="token-status" style="background:var(--border);border-color:var(--border-s);color:var(--text-3)">Inativo</span>
+            </div>
+            <div class="token-row">
+              <input type="password" class="token-input" id="token-anthropic" placeholder="sk-ant-...">
+              <button class="token-save-btn" onclick="saveToken('anthropic')">Salvar</button>
+              <button class="token-eye-btn" onclick="toggleTokenVisibility('anthropic')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="token-block">
+            <div class="token-head">
+              <div class="token-name">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a10 10 0 1 0 10 10"/></svg>
+                GPT-4o (OpenAI) — futuro
+              </div>
+              <span class="token-status" style="background:var(--border);border-color:var(--border-s);color:var(--text-3)">Inativo</span>
+            </div>
+            <div class="token-row">
+              <input type="password" class="token-input" id="token-openai" placeholder="sk-...">
+              <button class="token-save-btn" onclick="saveToken('openai')">Salvar</button>
+              <button class="token-eye-btn" onclick="toggleTokenVisibility('openai')">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        </div>
+      </div>
+
+      <!-- USUÁRIOS -->
+      <div class="admin-view" id="view-usuarios">
+        <div class="admin-panel">
+          <div class="admin-panel-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Usuários
+          </div>
+          <div style="background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:var(--radius-s);padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--amber)">Perfis exclusivos deste agente — não interferem nos acessos do Stage.</div>
+          <table class="users-table">
+            <thead><tr><th>Usuário</th><th>Perfil</th><th>Primeiro acesso</th><th>Ação</th></tr></thead>
+            <tbody id="users-tbody"><tr><td colspan="4" style="color:var(--text-3);text-align:center;padding:16px;font-size:12px">Usuários identificados via login no agente</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- CAMPOS MOVIDESK -->
+      <div class="admin-view" id="view-movidesk">
+        <div class="admin-panel">
+          <div class="admin-panel-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/></svg>
+            Catálogo de Serviços e Classificações
+          </div>
+          <p style="font-size:12px;color:var(--text-2);margin-bottom:10px;line-height:1.6">Estes campos são buscados diretamente da API do Movidesk e usados pelo agente para sugerir a classificação correta de cada ticket. Atualize sempre que o catálogo mudar.</p>
+          <div style="font-size:11px;color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:var(--radius-xs);padding:7px 10px;margin-bottom:12px">⚠ A busca funciona quando o agente estiver hospedado no SharePoint ou Stage. Não funciona abrindo o arquivo local (file://).</div>
+          <button onclick="fetchMovideskFields()" id="fetch-mv-btn" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:8px 16px;border-radius:var(--radius-s);background:var(--accent);color:#fff;border:none;cursor:pointer;margin-bottom:16px">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>
+            Buscar do Movidesk agora
+          </button>
+          <div id="mv-fields-status" style="font-size:11px;color:var(--text-3);margin-bottom:12px"></div>
+          <div id="mv-fields-preview" style="font-size:12px;color:var(--text-2)"></div>
+        </div>
+      </div>
+
+      <!-- SINALIZAÇÕES -->
+      <div class="admin-view" id="view-flags">
+        <div class="admin-panel">
+          <div class="admin-panel-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+            Sinalizações
+          </div>
+          <div style="font-size:11px;font-weight:600;color:var(--text-2);margin-bottom:8px">Pendentes</div>
+          <div id="flags-pending-list"><div style="color:var(--text-3);font-size:12px;padding:8px 0">Nenhuma sinalização pendente.</div></div>
+          <div style="font-size:11px;font-weight:600;color:var(--text-2);margin:16px 0 8px">Resolvidas</div>
+          <div id="flags-resolved-list"><div style="color:var(--text-3);font-size:12px;padding:8px 0">Nenhuma sinalização resolvida ainda.</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════
+const MOVIDESK_TOKEN_DEFAULT = '';
+const MOVIDESK_BASE = 'https://api.movidesk.com/public/v1';
+const ANTHROPIC_BASE = 'https://api.anthropic.com/v1/messages';
+const OPENAI_BASE = 'https://api.openai.com/v1/chat/completions';
+const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+const JIRA_BASE = 'https://way2agile.atlassian.net/rest/api/3';
+const JIRA_EMAIL_DEFAULT = 'thaysi.roldan@way2.com.br';
+const JIRA_TOKEN_DEFAULT = '';
+
+// ── Storage wrapper ──────────────────────────────────
+const storage = {
+  get: k => { try { return JSON.parse(localStorage.getItem(k)) } catch{ return null } },
+  set: (k,v) => { try { localStorage.setItem(k, JSON.stringify(v)) } catch{} },
+  del: k => { try { localStorage.removeItem(k) } catch{} }
+};
+
+// ── Document index ───────────────────────────────────
+const KB_ARTICLES = {
+  'Base Geral': [
+    { id: 414158, title: 'Usuários — Criar e gerenciar usuários no PowerHub', keywords: ['usuário','usuario','criar usuario','novo usuario','cadastrar usuario','gerenciar usuario','perfil acesso','acesso'] },
+  ],
+  'Telemetria': [], 'SCDE': [], 'Setorial': [], 'Gestão de Faturas': [],
+};
+
+const SCOPE_ICONS = {
+  'Telemetria':'#F5A623','SCDE':'#6D28D9','Setorial':'#EA580C',
+  'Gestão de Faturas':'#2563EB','Base Geral':'#64748B','Sobre o Agente':'#F5A623'
+};
+
+const SCOPE_INSTRUCTIONS = {
+  'Telemetria': `Você é o Agente de Conhecimento de Telemetria da Way2 Tecnologia. Auxilie analistas na resolução de chamados técnicos relacionados a telemetria — coleta de dados, medidores, protocolos (MQTT, TCP/IP) e equipamentos de campo. Baseie respostas EXCLUSIVAMENTE nas fontes fornecidas. Se não houver informação nas fontes, informe claramente: "Não encontrei documentação específica sobre isso" e nunca invente procedimentos. No MODO ATENDIMENTO estruture em: 1) PRIMEIRO CONTATO AO CLIENTE (profissional, humano), 2) ORIENTAÇÃO TÉCNICA INTERNA (passo a passo baseado nas fontes, com fonte utilizada, grupo: PowerHub/Telemetria, prioridade, tempo estimado) — inclua sempre SUGESTÃO DE CLASSIFICAÇÃO MOVIDESK (Serviço, Categoria, Subcategoria, Urgência) com base nas opções reais disponíveis no contexto do ticket, 3) RESPOSTA FINAL AO CLIENTE (sem expor ferramentas internas). No MODO CONSULTA responda diretamente com base nas fontes, sem sugestão de resposta ao cliente — apenas explique o conteúdo encontrado. Nunca mencione Jira, Movidesk, IA nas mensagens ao cliente. Responda em português.`,
+  'SCDE': `Você é o Agente de Conhecimento de SCDE da Way2 Tecnologia. Auxilie em chamados sobre SCDE — cadastro de pontos, módulos, fluxos de dados. Baseie respostas EXCLUSIVAMENTE nas fontes fornecidas. Se não houver informação, informe claramente. No MODO ATENDIMENTO estruture em 3 partes: primeiro contato ao cliente, orientação técnica interna (grupo: PowerHub/SCDE, com fonte), resposta final ao cliente. No MODO CONSULTA responda diretamente com base nas fontes, sem sugestão de resposta ao cliente. Nunca mencione ferramentas internas. Responda em português.`,
+  'Setorial': `Você é o Agente de Conhecimento Setorial da Way2 Tecnologia. Auxilie em chamados sobre normas CCEE, ONS, ANEEL e processos do setor elétrico. Baseie respostas EXCLUSIVAMENTE nas fontes fornecidas. Se não houver informação, informe claramente. No MODO ATENDIMENTO estruture em 3 partes: primeiro contato, orientação técnica (grupo: PowerHub/Setorial), resposta final. No MODO CONSULTA responda diretamente com base nas fontes, sem sugestão de resposta ao cliente. Sinalize quando envolver interpretação de norma. Responda em português.`,
+  'Gestão de Faturas': `Você é o Agente de Conhecimento de Gestão de Faturas da Way2 Tecnologia. Auxilie em chamados de faturamento, tarifas, bandeiras e contestações. Baseie respostas EXCLUSIVAMENTE nas fontes fornecidas. Se não houver informação, informe claramente. No MODO ATENDIMENTO estruture em 3 partes: primeiro contato, orientação técnica (grupo: PowerHub/Gestão de Faturas), resposta final. No MODO CONSULTA responda diretamente com base nas fontes, sem sugestão de resposta ao cliente. Para contestações, tom especialmente acolhedor. Responda em português.`,
+  'Base Geral': `Você é o Agente de Conhecimento Base Geral da Way2 Tecnologia. Responda sobre documentação transversal da plataforma PowerHub. Baseie respostas EXCLUSIVAMENTE nas fontes fornecidas. Se não houver informação nas fontes, informe claramente: "Não encontrei documentação sobre isso nas fontes disponíveis." Nunca invente procedimentos. Se o tema pertencer a outro escopo, indique qual. No MODO ATENDIMENTO estruture em 3 partes: primeiro contato, orientação técnica, resposta final. No MODO CONSULTA responda diretamente com base nas fontes, sem sugestão de resposta ao cliente. Responda em português.`,
+  'Sobre o Agente': `Você é o assistente de ajuda do Agente PowerHub. Responda dúvidas sobre como usar a ferramenta — modos, campos, comportamentos. Para colaboradores: atendimento, consulta, ticket, encerramento, espera. Para admins: painel, tokens, documentos. Responda em português.`
+};
+
+// ── State ────────────────────────────────────────────
+let currentUser = null;
+let currentEngine = 'gemini';
+let currentMode = 'atendimento';
+let currentScope = 'Telemetria';
+let ticketLinked = false;
+let ticketData = null;
+let conversationHistory = [];
+let isLoading = false;
+let sessions = [];
+let allDocs = [];
+let selectedResOption = null;
+let flags = [];
+let suggestType = 'suggest';
+
+// ═══════════════════════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════════════════════
+function doLogin() {
+  const name = document.getElementById('login-name').value.trim();
+  const email = document.getElementById('login-email').value.trim();
+  if (!name || !email) { alert('Preencha nome e e-mail para continuar.'); return; }
+  const knownUsers = storage.get('ph_known_users') || [];
+  const isFirst = knownUsers.length === 0;
+  const existing = knownUsers.find(u => u.email === email);
+  const role = isFirst ? 'admin' : (existing?.role || 'analista');
+  const user = { name, email, role, loginAt: new Date().toISOString() };
+  // Registrar usuário
+  if (!existing) { knownUsers.push({ name, email, role, firstLogin: new Date().toISOString() }); }
+  else { existing.name = name; existing.lastLogin = new Date().toISOString(); }
+  storage.set('ph_known_users', knownUsers);
+  storage.set('ph_user', user);
+  initApp(user);
+}
+
+
+function buildWelcomeMsg(scope) {
+  const scopes = ['Telemetria','SCDE','Setorial','Gestão de Faturas','Base Geral'];
+  const colors = {
+    'Telemetria':'#F5A623','SCDE':'#6D28D9','Setorial':'#EA580C',
+    'Gestão de Faturas':'#2563EB','Base Geral':'#64748B'
+  };
+  // Pictogramas minimalistas por escopo — inspirados no contexto energy/data da Way2
+  const icons = {
+    'Telemetria': `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2 12h2"/><path d="M20 12h2"/><path d="M12 2v2"/><path d="M12 20v2"/>
+      <circle cx="12" cy="12" r="4"/>
+      <path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/>
+      <path d="M4.93 19.07l1.41-1.41"/><path d="M17.66 6.34l1.41-1.41"/>
+    </svg>`,
+    'SCDE': `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="3" width="20" height="14" rx="2"/>
+      <path d="M8 21h8"/><path d="M12 17v4"/>
+      <path d="M7 8h.01"/><path d="M11 8h6"/>
+      <path d="M7 12h.01"/><path d="M11 12h6"/>
+    </svg>`,
+    'Setorial': `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+      <polyline points="9 22 9 12 15 12 15 22"/>
+    </svg>`,
+    'Gestão de Faturas': `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+      <polyline points="14 2 14 8 20 8"/>
+      <line x1="12" y1="18" x2="12" y2="12"/>
+      <line x1="9" y1="15" x2="15" y2="15"/>
+    </svg>`,
+    'Base Geral': `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+    </svg>`
+  };
+  const activeColor = colors[scope] || '#F5A623';
+  const scopePills = scopes.map(s => {
+    const active = s === scope;
+    const col = colors[s];
+    const ico = icons[s] || '';
+    return `<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:${active?'600':'400'};padding:3px 9px;border-radius:20px;border:1px solid ${active?col+'60':'#E8EBF0'};color:${active?col:'#8C9BAB'};background:${active?col+'14':'transparent'};margin:2px;cursor:pointer" onclick="selectSpill(document.querySelectorAll('.spill')[${scopes.indexOf(s)}],'${s}')">${ico}${s}</span>`;
+  }).join('');
+
+  return `<div style="font-size:13px;font-weight:500;margin-bottom:10px">Olá! Pronto para ajudar com <strong style="color:${activeColor}">${scope}</strong>.</div>
+<div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:12px">${scopePills}</div>
+<div style="font-size:12px;color:var(--text-2);display:flex;align-items:flex-start;gap:8px;padding:10px 12px;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--radius-s);line-height:1.5">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-d)" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/></svg>
+  <div style="flex:1">
+    <div style="font-size:11px;font-weight:600;color:var(--accent-d);margin-bottom:6px">Vincular ticket Movidesk</div>
+    <div style="display:flex;gap:6px">
+      <input id="ticket-inline-input" type="text" placeholder="Número do ticket..." onkeydown="if(event.key==='Enter')vincularTicketInline()"
+        style="flex:1;border:1.5px solid var(--accent-border);border-radius:var(--radius-xs);padding:6px 10px;font-size:12px;color:var(--text);font-family:inherit;outline:none;background:var(--surface)">
+      <button onclick="vincularTicketInline()"
+        style="background:var(--accent);color:#fff;border:none;border-radius:var(--radius-xs);padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">Vincular</button>
+    </div>
+  </div>
+</div>`;
+}
+
+
+function initApp(user) {
+  currentUser = user;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+
+  // Update sidebar user info
+  const initials = user.name.split(' ').map(p=>p[0]).join('').substring(0,2).toUpperCase();
+  document.getElementById('sb-av').textContent = initials;
+  document.getElementById('sb-name').textContent = user.name;
+  document.getElementById('sb-role').innerHTML = `<div class="online-dot"></div>${user.role === 'admin' ? 'Admin' : 'Analista'}`;
+
+  // Show admin button if admin
+  document.getElementById('admin-toggle-btn').style.display = '';
+
+  // Load state
+  sessions = storage.get('ph_sessions') || [];
+  allDocs = storage.get('ph_docs') || getDefaultDocs();
+  flags = storage.get('ph_flags') || [];
+  updateFlagsBadge();
+  const savedMvFields = storage.get('ph_mv_fields');
+  if (savedMvFields) mvFields = savedMvFields;
+  // Renderizar boas-vindas com buildWelcomeMsg
+  const wbubble = document.getElementById('msgs-atend');
+  if (wbubble) wbubble.innerHTML = `<div class="msg-row"><div class="msg-av agent" style="padding:5px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="bubble agent">${buildWelcomeMsg(currentScope)}</div></div>`;
+  renderSessions();
+  refreshDocsPanel();
+  loadAdminData();
+
+  // Load tokens
+  loadSavedTokens();
+
+  // Engine
+  let eng = storage.get('ph_engine') || 'gemini';
+  if (eng === 'openai' && !storage.get('ph_token_openai')) eng = 'gemini';
+  if (eng === 'anthropic' && !storage.get('ph_token_anthropic')) eng = 'gemini';
+  storage.set('ph_engine', eng);
+  currentEngine = eng;
+  setTimeout(() => selectEngine(eng), 50);
+}
+
+function checkUrlParams() {
+  const params = new URLSearchParams(window.location.search);
+  const name = params.get('usuario') || params.get('user') || params.get('nome');
+  const email = params.get('email');
+  const role = params.get('perfil') || params.get('role') || 'analista';
+  if (name && email) {
+    const user = { name, email, role, loginAt: new Date().toISOString(), source: 'stage' };
+    storage.set('ph_user', user);
+    return user;
+  }
+  return null;
+}
+
+// ── Boot ─────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', function() {
+  // 1. Try URL params (Stage integration)
+  const urlUser = checkUrlParams();
+  if (urlUser) { initApp(urlUser); return; }
+
+  // 2. Try saved user
+  const savedUser = storage.get('ph_user');
+  if (savedUser && savedUser.name && savedUser.email) { initApp(savedUser); return; }
+
+  // 3. Show login screen
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+
+  // Enter key on login
+  document.getElementById('login-email').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+  document.getElementById('login-name').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('login-email').focus(); });
+});
+
+function loadSavedTokens() {
+  const tokens = ['gemini','movidesk','jira','anthropic','openai'];
+  tokens.forEach(t => {
+    const saved = storage.get(`ph_token_${t}`);
+    const input = document.getElementById(`token-${t}`);
+    if (saved && input) { input.value = saved; updateTokenStatus(t, true); }
+  });
+  // Pre-fill defaults if not set
+  if (!storage.get('ph_token_movidesk')) {
+    storage.set('ph_token_movidesk', MOVIDESK_TOKEN_DEFAULT);
+    const el = document.getElementById('token-movidesk');
+    if (el) { el.value = MOVIDESK_TOKEN_DEFAULT; updateTokenStatus('movidesk', true); }
+  }
+  if (!storage.get('ph_token_jira')) {
+    storage.set('ph_token_jira', JIRA_TOKEN_DEFAULT);
+    const el = document.getElementById('token-jira');
+    if (el) { el.value = JIRA_TOKEN_DEFAULT; updateTokenStatus('jira', true); }
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// DEFAULT DOCS
+// ═══════════════════════════════════════════════════════
+function getDefaultDocs() {
+  return [
+    {name:'API MQTT da Remota',scope:'Telemetria',keywords:['mqtt','api','remota','protocolo','broker'],url:'https://cloudway2.sharepoint.com/sites/ConsumidoresOperaes/Documentos%20Compartilhados/Agente%20PowerHub%20%E2%80%94%20Documentos/Telemetria/API%20MQTT%20da%20Remota.pdf'},
+    {name:'Datasheet Khomp',scope:'Telemetria',keywords:['khomp','datasheet','especificação','hardware'],url:'https://cloudway2.sharepoint.com/sites/ConsumidoresOperaes/Documentos%20Compartilhados/Agente%20PowerHub%20%E2%80%94%20Documentos/Telemetria/Datasheet%20Khomp.pdf'},
+    {name:'Manual de Instalação Khomp',scope:'Telemetria',keywords:['khomp','instalação','manual','configuração','setup'],url:'https://cloudway2.sharepoint.com/sites/ConsumidoresOperaes/Documentos%20Compartilhados/Agente%20PowerHub%20%E2%80%94%20Documentos/Telemetria/Manual%20de%20Instala%C3%A7%C3%A3o%20-%20Khomp.pdf'},
+    {name:'Especificação Comunicação SMS',scope:'Telemetria',keywords:['sms','comunicação','gsm','mensagem'],url:'https://cloudway2.sharepoint.com/sites/ConsumidoresOperaes/Documentos%20Compartilhados/Agente%20PowerHub%20%E2%80%94%20Documentos/Telemetria/Especifica%C3%A7%C3%A3o%20da%20comunica%C3%A7%C3%A3o%20SMS.pdf'},
+    {name:'Especificação Interface LEDs',scope:'Telemetria',keywords:['led','luz','indicador','status'],url:'https://cloudway2.sharepoint.com/sites/ConsumidoresOperaes/Documentos%20Compartilhados/Agente%20PowerHub%20%E2%80%94%20Documentos/Telemetria/Especifica%C3%A7%C3%A3o%20da%20Interface%20de%20LEDs.pdf'},
+    {name:'Implantação Telemetria Ethernet',scope:'Telemetria',keywords:['ethernet','implantação','rede','ip','cabo','tcp'],url:'https://cloudway2.sharepoint.com/sites/ConsumidoresOperaes/Documentos%20Compartilhados/Agente%20PowerHub%20%E2%80%94%20Documentos/Telemetria/Implanta%C3%A7%C3%A3o%20de%20telemetria%20-%20Ethernet%20(WAY2).pdf'},
+    {name:'Remota com Controlador de Demanda',scope:'Telemetria',keywords:['remota','controlador','demanda','controle'],url:'https://cloudway2.sharepoint.com/sites/ConsumidoresOperaes/Documentos%20Compartilhados/Agente%20PowerHub%20%E2%80%94%20Documentos/Telemetria/Remota%20com%20Controlador%20de%20demanda.pdf'},
+    {name:'Remota sem Controlador de Demanda',scope:'Telemetria',keywords:['remota','sem controlador','leitura','medidor','pulso'],url:'https://cloudway2.sharepoint.com/sites/ConsumidoresOperaes/Documentos%20Compartilhados/Agente%20PowerHub%20%E2%80%94%20Documentos/Telemetria/Remota%20sem%20controlador%20de%20demanda.pdf'},
+    {name:'Treinamento IED 102',scope:'Telemetria',keywords:['ied','iec','protocolo','101','102','104','serial'],url:'https://cloudway2.sharepoint.com/sites/ConsumidoresOperaes/Documentos%20Compartilhados/Agente%20PowerHub%20%E2%80%94%20Documentos/Telemetria/Treinamento%20IED%20102%20-%20WAY2.pdf'},
+    {name:'RMA Lista',scope:'Telemetria',keywords:['rma','retorno','devolução','defeito','reposição'],url:'https://cloudway2.sharepoint.com/sites/ConsumidoresOperaes/Documentos%20Compartilhados/Agente%20PowerHub%20%E2%80%94%20Documentos/Telemetria/RMA%20LISTA.docx'},
+    {name:'Manual RMA Khomp',scope:'Telemetria',keywords:['rma','khomp','defeito','garantia','troca'],url:'https://cloudway2.sharepoint.com/sites/ConsumidoresOperaes/Documentos%20Compartilhados/Agente%20PowerHub%20%E2%80%94%20Documentos/Telemetria/Manual%20RMA%20Khomp.docx'},
+  ];
+}
+
+// ═══════════════════════════════════════════════════════
+// INTEGRATIONS
+// ═══════════════════════════════════════════════════════
+async function searchJira(query, scope) {
+  const token = storage.get('ph_token_jira') || JIRA_TOKEN_DEFAULT;
+  const jqlMap = {
+    'Telemetria': 'project = PowerHub AND labels = Telemetria',
+    'SCDE': 'project = PowerHub AND labels = SCDE',
+    'Setorial': 'project = PowerHub AND labels = Setorial',
+    'Gestão de Faturas': 'project = PowerHub AND labels = Faturas',
+  };
+  const scopeFilter = jqlMap[scope] || 'project = PowerHub';
+  const jql = `${scopeFilter} AND text ~ "${query.substring(0,80)}" AND statusCategory = Done ORDER BY updated DESC`;
+  try {
+    const resp = await fetch(`${JIRA_BASE}/search?jql=${encodeURIComponent(jql)}&maxResults=5&fields=summary,description,resolution,status`, {
+      headers: { 'Authorization': 'Basic ' + btoa(JIRA_EMAIL_DEFAULT + ':' + token), 'Accept': 'application/json' }
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    if (!data.issues?.length) return null;
+    return data.issues.map(i => {
+      const desc = i.fields.description?.content?.[0]?.content?.[0]?.text || '';
+      return `- ${i.key}: ${i.fields.summary}${desc ? ' | ' + desc.substring(0,150) : ''}`;
+    }).join('\n');
+  } catch { return null; }
+}
+
+async function searchCentralAjuda(query, scope) {
+  try {
+    const scopeArticles = KB_ARTICLES[scope] || [];
+    const generalArticles = KB_ARTICLES['Base Geral'] || [];
+    const allArticles = [...new Map([...scopeArticles,...generalArticles].map(a=>[a.id,a])).values()];
+    if (!allArticles.length) return null;
+    const lower = query.toLowerCase();
+    const relevant = allArticles.filter(a =>
+      a.keywords.some(kw => lower.includes(kw)) ||
+      a.title.toLowerCase().split(' ').some(w => w.length > 4 && lower.includes(w))
+    );
+    if (!relevant.length) return null;
+    const fetches = relevant.slice(0,2).map(async a => {
+      try {
+        const resp = await fetch(`${MOVIDESK_BASE}/article/${a.id}?token=${storage.get('ph_token_movidesk') || MOVIDESK_TOKEN_DEFAULT}`, { headers: { 'Accept': 'application/json' } });
+        if (!resp.ok) return `- ${a.title}: (conteúdo indisponível)`;
+        const data = await resp.json();
+        const text = (data.contentHtml || data.content || '').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim().substring(0,800);
+        return `- Artigo: "${a.title}"\n  Conteúdo: ${text || '(sem conteúdo)'}`;
+      } catch { return `- ${a.title}: (erro ao carregar)`; }
+    });
+    const results = await Promise.all(fetches);
+    return results.join('\n\n');
+  } catch { return null; }
+}
+
+async function searchMovideskSimilar(query) {
+  const token = storage.get('ph_token_movidesk') || MOVIDESK_TOKEN_DEFAULT;
+  try {
+    const resp = await fetch(
+      `${MOVIDESK_BASE}/tickets?token=${token}&$select=id,subject,serviceFirstLevelName,actions&$filter=status eq 'Resolvido'&$top=3&$search=${encodeURIComponent(query.substring(0,60))}`,
+      { headers: { 'Accept': 'application/json' } }
+    );
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    if (!data?.length) return null;
+    return data.map(t => {
+      const lastAction = t.actions?.slice(-1)[0]?.description?.substring(0,200) || '';
+      return `- MV-${t.id}: ${t.subject}${lastAction ? ' | Resolução: ' + lastAction : ''}`;
+    }).join('\n');
+  } catch { return null; }
+}
+
+async function fetchDocContent(doc) {
+  try {
+    const resp = await fetch(doc.url, { credentials: 'include' });
+    if (!resp.ok) return null;
+    const text = await resp.text();
+    return text.replace(/<[^>]+>/g,'').substring(0, 2000);
+  } catch { return null; }
+}
+
+function findRelevantDocs(text, scope) {
+  const docs = allDocs.filter(d => d.scope === scope);
+  if (!docs.length) return [];
+  const lower = text.toLowerCase();
+  return docs.map(d => {
+    let score = 0;
+    (d.keywords||[]).forEach(kw => { if(lower.includes(kw)) score += 2; });
+    d.name.toLowerCase().split(' ').forEach(w => { if(w.length>3 && lower.includes(w)) score += 1; });
+    return { ...d, score };
+  }).filter(d=>d.score>0).sort((a,b)=>b.score-a.score).slice(0,3);
+}
+
+async function gatherContext(userMessage) {
+  const results = { jira: null, centralAjuda: null, movideskSimilar: null, docs: [] };
+  const shortQuery = userMessage.substring(0, 100);
+  const [jiraR, caR, mvR] = await Promise.allSettled([
+    searchJira(shortQuery, currentScope),
+    searchCentralAjuda(shortQuery, currentScope),
+    searchMovideskSimilar(shortQuery)
+  ]);
+  if (jiraR.status==='fulfilled') results.jira = jiraR.value;
+  if (caR.status==='fulfilled') results.centralAjuda = caR.value;
+  if (mvR.status==='fulfilled') results.movideskSimilar = mvR.value;
+  const relevantDocs = findRelevantDocs(userMessage, currentScope);
+  if (relevantDocs.length) {
+    const fetched = await Promise.allSettled(relevantDocs.map(d => fetchDocContent(d).then(c => ({name:d.name,content:c}))));
+    results.docs = fetched.filter(r=>r.status==='fulfilled'&&r.value.content).map(r=>r.value);
+  }
+  return results;
+}
+
+function buildContextBlock(ctx, ticketCtx) {
+  let block = '';
+  if (ticketCtx) block += `\n[CONTEXTO DO TICKET MOVIDESK]\n${ticketCtx}\n`;
+  if (ctx.movideskSimilar) block += `\n[TICKETS MOVIDESK SIMILARES RESOLVIDOS]\n${ctx.movideskSimilar}\n`;
+  if (ctx.jira) block += `\n[ISSUES JIRA RELACIONADAS — somente leitura]\n${ctx.jira}\n`;
+  if (ctx.centralAjuda) block += `\n[ARTIGOS CENTRAL DE AJUDA MOVIDESK]\n${ctx.centralAjuda}\n`;
+  if (ctx.docs.length) {
+    block += `\n[DOCUMENTAÇÃO TÉCNICA]\n`;
+    ctx.docs.forEach(d => { block += `\n--- ${d.name} ---\n${d.content}\n`; });
+  }
+  return block;
+}
+
+// ═══════════════════════════════════════════════════════
+// AI ENGINE
+// ═══════════════════════════════════════════════════════
+async function callAI(system, messages) {
+  const engine = storage.get('ph_engine') || currentEngine;
+  if (engine === 'anthropic') {
+    const key = storage.get('ph_token_anthropic');
+    if (!key) return null;
+    const resp = await fetch(ANTHROPIC_BASE, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:2000, system, messages })
+    });
+    if (!resp.ok) { const e=await resp.json().catch(()=>({})); throw new Error(e.error?.message||'Erro Anthropic '+resp.status); }
+    const data = await resp.json();
+    return data.content[0].text;
+  } else if (engine === 'gemini') {
+    const key = storage.get('ph_token_gemini');
+    if (!key) return null;
+    const resp = await fetch(`${GEMINI_BASE}?key=${key}`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        system_instruction:{ parts:[{text:system}] },
+        contents: messages.map(m => ({ role: m.role==='assistant'?'model':'user', parts:[{text:m.content}] })),
+        generationConfig:{ maxOutputTokens:2000, temperature:0.7 }
+      })
+    });
+    if (!resp.ok) { const e=await resp.json().catch(()=>({})); throw new Error(e.error?.message||'Erro Gemini '+resp.status); }
+    const data = await resp.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
+  } else {
+    const key = storage.get('ph_token_openai');
+    if (!key) return null;
+    const resp = await fetch(OPENAI_BASE, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body: JSON.stringify({ model:'gpt-4o', max_tokens:2000, messages:[{role:'system',content:system},...messages] })
+    });
+    if (!resp.ok) { const e=await resp.json().catch(()=>({})); throw new Error(e.error?.message||'Erro OpenAI '+resp.status); }
+    const data = await resp.json();
+    return data.choices[0].message.content;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// TICKET
+// ═══════════════════════════════════════════════════════
+function vincularTicketInline() {
+  const input = document.getElementById('ticket-inline-input');
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) return;
+  document.getElementById('ticket-input').value = val;
+  vincularTicket();
+}
+
+async function vincularTicket() {
+  const val = document.getElementById('ticket-input').value.trim();
+  if (!val) return;
+  const btn = document.getElementById('ticket-btn');
+  btn.textContent = '...'; btn.disabled = true;
+  setStatusPill('loading','Carregando ticket...');
+  try {
+    const token = storage.get('ph_token_movidesk') || MOVIDESK_TOKEN_DEFAULT;
+    const resp = await fetch(`${MOVIDESK_BASE}/tickets?token=${token}&id=${encodeURIComponent(val)}&$select=id,subject,createdDate,lastUpdate,status,serviceFirstLevelName,actions`);
+    if (resp.ok) {
+      const data = await resp.json();
+      const ticket = Array.isArray(data) ? data[0] : data;
+      if (ticket) { ticketData = ticket; showTicketLinked(val); addTicketContextMsg(ticket); return; }
+    }
+  } catch {}
+  // fallback manual
+  ticketData = { id: val, subject: 'Ticket vinculado manualmente' };
+  showTicketLinked(val);
+  addMsg('agent', `Ticket <strong>MV-${val}</strong> vinculado. Descreva o problema para iniciarmos.`);
+}
+
+function showTicketLinked(val) {
+  ticketLinked = true;
+  document.getElementById('ticket-input').style.display = 'none';
+  document.getElementById('ticket-btn').style.display = 'none';
+  document.getElementById('ticket-text').textContent = `MV-${val} · vinculado`;
+  document.getElementById('ticket-badge').classList.add('show');
+  document.getElementById('trb').classList.add('ok');
+  document.getElementById('trb-icon').textContent = '✅';
+  document.getElementById('trb-label').className = 'trb-label ok'; document.getElementById('trb-label').textContent = 'Ticket vinculado';
+  document.getElementById('trb-desc').className = 'trb-desc ok'; document.getElementById('trb-desc').textContent = 'Resolução será registrada como nota interna no Movidesk.';
+  document.getElementById('trb-val').style.display = 'block'; document.getElementById('trb-val').textContent = `🎫 MV-${val}`;
+  document.getElementById('btn-save').disabled = false;
+  setStatusPill('online','Online');
+}
+
+function desvincularTicket() {
+  ticketLinked = false; ticketData = null;
+  document.getElementById('ticket-input').style.display = ''; document.getElementById('ticket-input').value = '';
+  document.getElementById('ticket-btn').style.display = ''; document.getElementById('ticket-btn').textContent = 'Vincular'; document.getElementById('ticket-btn').disabled = false;
+  document.getElementById('ticket-badge').classList.remove('show');
+  document.getElementById('trb').classList.remove('ok');
+  document.getElementById('trb-icon').textContent = '⚠️';
+  document.getElementById('trb-label').className = 'trb-label'; document.getElementById('trb-label').textContent = 'Ticket obrigatório para encerrar';
+  document.getElementById('trb-desc').className = 'trb-desc'; document.getElementById('trb-desc').textContent = 'Vincule o ticket Movidesk antes de salvar.';
+  document.getElementById('trb-val').style.display = 'none';
+  document.getElementById('btn-save').disabled = true;
+}
+
+function addTicketContextMsg(ticket) {
+  const subject = ticket.subject || 'Sem título';
+  const lastAction = ticket.actions?.slice(-1)[0]?.description?.substring(0,200) || '';
+  const html = `
+    <div style="font-size:11px;font-weight:600;color:var(--green);margin-bottom:6px;display:flex;align-items:center;gap:5px">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/></svg>
+      Contexto carregado — MV-${ticket.id}
+    </div>
+    <div style="font-size:12px;color:var(--text);margin-bottom:4px"><strong>Assunto:</strong> ${subject}</div>
+    ${lastAction ? `<div style="font-size:12px;color:var(--text-2);margin-bottom:4px"><strong>Último registro:</strong> ${lastAction}</div>` : ''}
+    <div style="font-size:10px;color:var(--text-3);border-top:1px solid var(--green-border);padding-top:6px;margin-top:4px">Dados de identificação do cliente omitidos — apenas contexto técnico</div>`;
+  addMsg('agent', html, 'ticket-ctx');
+  conversationHistory.push({ role:'user', content:`[CONTEXTO DO TICKET MV-${ticket.id}]\nAssunto: ${subject}\n${lastAction?'Último registro: '+lastAction:''}` });
+  setTimeout(() => addMsg('agent', `Contexto carregado. Problema relatado: <strong>${subject}</strong>.<br>Descreva o problema com mais detalhes ou posso iniciar a busca nas fontes.`), 600);
+}
+
+// ═══════════════════════════════════════════════════════
+// SEND MESSAGE
+// ═══════════════════════════════════════════════════════
+async function sendMessage() {
+  const input = document.getElementById('msg-input');
+  const text = input.value.trim();
+  if (!text || isLoading) return;
+
+  const engine = storage.get('ph_engine') || 'gemini';
+  const hasKey = engine==='anthropic' ? storage.get('ph_token_anthropic')
+    : engine==='gemini' ? storage.get('ph_token_gemini')
+    : storage.get('ph_token_openai');
+  if (!hasKey) {
+    addMsg('agent', `⚠️ <strong>API key não configurada.</strong> Acesse Admin → Tokens e APIs e insira a chave do motor ativo.`);
+    return;
+  }
+
+  addMsg('user', text);
+  input.value = ''; input.style.height = 'auto';
+  const typingId = addTyping();
+  isLoading = true; setLoading(true,'Consultando fontes...');
+
+  try {
+    const ticketCtx = ticketData ? `Ticket MV-${ticketData.id}: ${ticketData.subject||''}` : null;
+    setLoading(true,'Buscando no Jira e Movidesk...');
+    const ctx = await gatherContext(text);
+    const contextBlock = buildContextBlock(ctx, ticketCtx);
+    const modeCtx = currentMode === 'consulta' ? 'MODO CONSULTA ativo.' : 'MODO ATENDIMENTO ativo.';
+    const mvCtx = getMvFieldsContext();
+    const baseInstr = (SCOPE_INSTRUCTIONS[currentScope] || SCOPE_INSTRUCTIONS['Base Geral']).replace('MODO_PLACEHOLDER','') + '\n\n' + modeCtx + (mvCtx ? '\n' + mvCtx : '');
+    const enrichedSystem = contextBlock
+      ? baseInstr + '\n\n=== FONTES CONSULTADAS ===\nUse as informações abaixo para embasar sua resposta. Cite qual fonte foi usada.\n' + contextBlock
+      : baseInstr;
+
+    setLoading(true,'Gerando resposta...');
+    removeTyping(typingId);
+    const reply = await callAI(enrichedSystem, [...conversationHistory, {role:'user',content:text}]);
+
+    if (reply) {
+      conversationHistory.push({role:'user',content:text});
+      conversationHistory.push({role:'assistant',content:reply});
+      const sources = [];
+      if (ticketCtx) sources.push('<span class="tag mv">Movidesk</span>');
+      if (ctx.movideskSimilar) sources.push('<span class="tag mv">Tickets similares</span>');
+      if (ctx.jira) sources.push('<span class="tag jira">Jira</span>');
+      if (ctx.centralAjuda) sources.push('<span class="tag kb">Central de Ajuda</span>');
+      ctx.docs.forEach(d => sources.push(`<span class="tag doc">${d.name}</span>`));
+      const srcHtml = sources.length ? `<div class="src-section">${sources.join('')}</div>` : '';
+      addMsg('agent', formatReply(reply) + srcHtml);
+
+      // Detectar se não encontrou nas fontes
+      const noFoundPhrases = ['não encontrei documentação','não encontrei nas fontes','não encontrei informação','fontes disponíveis','sem documentação','nenhuma fonte','não há informação'];
+      const replyLower = reply.toLowerCase();
+      const noSourcesUsed = !ctx.jira && !ctx.centralAjuda && !ctx.docs.length && !ctx.movideskSimilar;
+      const hasNoFoundPhrase = noFoundPhrases.some(p => replyLower.includes(p));
+      if (noSourcesUsed || hasNoFoundPhrase) {
+        setTimeout(() => showNotFoundBanner(text), 400);
+      }
+    } else {
+      addMsg('agent','⚠️ O agente não retornou resposta. Verifique a API key em Admin → Tokens.');
+    }
+  } catch(e) {
+    removeTyping(typingId);
+    addMsg('agent',`⚠️ ${e.message||'Erro ao consultar fontes.'}`);
+  }
+  isLoading = false; setLoading(false,'Online');
+}
+
+function formatReply(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g,'<em>$1</em>')
+    .replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>')
+    .replace(/1[.)]\s*PRIMEIRO CONTATO AO CLIENTE/gi,'<div style="margin-top:10px;padding:6px 10px;background:var(--blue-bg);border-left:3px solid var(--blue);border-radius:0 6px 6px 0;font-size:11px;font-weight:600;color:var(--blue)">✉ PRIMEIRO CONTATO AO CLIENTE</div>')
+    .replace(/2[.)]\s*ORIENTA[ÇC][ÃA]O T[ÉE]CNICA INTERNA/gi,'<div style="margin-top:10px;padding:6px 10px;background:var(--amber-bg);border-left:3px solid var(--amber);border-radius:0 6px 6px 0;font-size:11px;font-weight:600;color:var(--amber)">⚙ ORIENTAÇÃO TÉCNICA INTERNA</div>')
+    .replace(/3[.)]\s*RESPOSTA FINAL AO CLIENTE/gi,'<div style="margin-top:10px;padding:6px 10px;background:var(--green-bg);border-left:3px solid var(--green);border-radius:0 6px 6px 0;font-size:11px;font-weight:600;color:var(--green)">✔ RESPOSTA FINAL AO CLIENTE</div>')
+    .replace(/SUGEST[ÃA]O DE CLASSIFICA[ÇC][ÃA]O MOVIDESK/gi,'<div style="margin-top:10px;padding:6px 10px;background:#EEF2FF;border-left:3px solid #4338CA;border-radius:0 6px 6px 0;font-size:11px;font-weight:600;color:#4338CA">🏷 SUGESTÃO DE CLASSIFICAÇÃO MOVIDESK</div>');
+}
+
+// ═══════════════════════════════════════════════════════
+// SAVE RESOLUTION
+// ═══════════════════════════════════════════════════════
+async function salvarResolucao() {
+  if (currentMode==='atendimento' && !ticketLinked) return;
+  const isAgent = selectedResOption === 'agent';
+  const obs = document.getElementById('obs-agent')?.value || '';
+  const desc = document.getElementById('desc-own')?.value || '';
+  const jira = document.getElementById(isAgent?'jira-agent':'jira-own')?.value || '';
+  const resolutionText = isAgent
+    ? `[Agente PowerHub — ${currentScope}]\nResolvido pelo agente de conhecimento.${obs?'\nObservação: '+obs:''}${jira?'\nJira: '+jira:''}`
+    : `[Agente PowerHub — ${currentScope}]\nResolução por outro meio.\n${desc}${jira?'\nJira: '+jira:''}`;
+
+  if (ticketLinked && ticketData) {
+    const token = storage.get('ph_token_movidesk') || MOVIDESK_TOKEN_DEFAULT;
+    fetch(`${MOVIDESK_BASE}/tickets?token=${token}`, {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ id: ticketData.id, actions:[{type:'Internal',description:resolutionText,isPublic:false}] })
+    }).catch(()=>{});
+  }
+
+  const session = {
+    id:Date.now(), scope:currentScope, ticket:ticketData?.id||null,
+    subject:ticketData?.subject||'Sessão sem ticket', type:isAgent?'agent':'own',
+    resolution:resolutionText, timestamp:new Date().toISOString(), status:'resolved',
+    user: currentUser?.name || '—'
+  };
+  sessions.push(session);
+  storage.set('ph_sessions', sessions);
+  closeModal(); renderSessions(); updateAdminKPIs(); novaSession();
+}
+
+// ═══════════════════════════════════════════════════════
+// WAITING / RESOLVE MODAL
+// ═══════════════════════════════════════════════════════
+function setWaiting(on) {
+  document.getElementById('waiting-overlay').style.display = on ? 'flex' : 'none';
+  if (on) setStatusPill('waiting','Aguardando');
+}
+
+function openResolveModal() { document.getElementById('resolve-modal-overlay').classList.add('open'); }
+function closeResolveModal() { document.getElementById('resolve-modal-overlay').classList.remove('open'); }
+function confirmarResolucaoManual() {
+  const text = document.getElementById('rm-text').value.trim();
+  if (!text) { alert('Descreva como foi resolvido.'); return; }
+  const session = {
+    id:Date.now(), scope:currentScope, ticket:ticketData?.id||null,
+    subject:ticketData?.subject||'Sessão sem ticket', type:'own',
+    resolution:`[Resolução manual]\n${text}`, timestamp:new Date().toISOString(), status:'resolved',
+    user: currentUser?.name||'—'
+  };
+  sessions.push(session); storage.set('ph_sessions',sessions);
+  if (ticketLinked && ticketData) {
+    const token = storage.get('ph_token_movidesk')||MOVIDESK_TOKEN_DEFAULT;
+    fetch(`${MOVIDESK_BASE}/tickets?token=${token}`,{
+      method:'PATCH', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({id:ticketData.id,actions:[{type:'Internal',description:`[Agente PowerHub]\nResolução manual:\n${text}`,isPublic:false}]})
+    }).catch(()=>{});
+  }
+  closeResolveModal(); renderSessions(); updateAdminKPIs(); novaSession();
+}
+
+// ═══════════════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════════════
+function addMsg(role, html, extraClass='') {
+  const container = currentMode==='atendimento' ? document.getElementById('msgs-atend') : document.getElementById('msgs-consulta');
+  const row = document.createElement('div');
+  row.className = `msg-row ${role==='user'?'user':''}`;
+  const av = document.createElement('div');
+  av.className = `msg-av ${role==='user'?'user':('agent'+(currentMode==='consulta'?' c':''))}`;
+  if (role==='user') {
+    av.textContent = currentUser ? currentUser.name.split(' ').map(p=>p[0]).join('').substring(0,2).toUpperCase() : '?';
+  } else {
+    av.style.background='transparent'; av.style.padding='1px';
+    av.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="28" height="28"><path d="M16 2 A14 14 0 1 1 15.99 2 Z" fill="none" stroke="#F5A623" stroke-width="3.5" opacity="0.3"/><path d="M16 2 A14 14 0 1 1 3.5 21" fill="none" stroke="#F5A623" stroke-width="3.5" stroke-linecap="round"/><rect x="9" y="14" width="3.5" height="8" rx="1.2" fill="#F5A623"/><rect x="14.2" y="10" width="3.5" height="12" rx="1.2" fill="#F5A623"/><rect x="19.5" y="12" width="3.5" height="10" rx="1.2" fill="#F5A623"/></svg>`;
+  }
+  const bubble = document.createElement('div');
+  bubble.className = `bubble ${role==='user'?'user':role==='system'?'system':extraClass?extraClass:'agent'}`;
+  bubble.innerHTML = html;
+  if (role!=='user') { row.appendChild(av); row.appendChild(bubble); }
+  else { row.appendChild(av); row.appendChild(bubble); }
+  container.appendChild(row);
+  container.scrollTop = container.scrollHeight;
+  return row;
+}
+
+function addTyping() {
+  const id = 'typing-' + Date.now();
+  const container = currentMode==='atendimento' ? document.getElementById('msgs-atend') : document.getElementById('msgs-consulta');
+  const row = document.createElement('div');
+  row.className='msg-row'; row.id=id;
+  const av = document.createElement('div');
+  av.className=`msg-av agent${currentMode==='consulta'?' c':''}`;
+  av.style.background='transparent'; av.style.padding='1px'; av.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="28" height="28"><path d="M16 2 A14 14 0 1 1 15.99 2 Z" fill="none" stroke="#F5A623" stroke-width="3.5" opacity="0.3"/><path d="M16 2 A14 14 0 1 1 3.5 21" fill="none" stroke="#F5A623" stroke-width="3.5" stroke-linecap="round"/><rect x="9" y="14" width="3.5" height="8" rx="1.2" fill="#F5A623"/><rect x="14.2" y="10" width="3.5" height="12" rx="1.2" fill="#F5A623"/><rect x="19.5" y="12" width="3.5" height="10" rx="1.2" fill="#F5A623"/></svg>`;
+  const bubble = document.createElement('div');
+  bubble.className='bubble agent';
+  bubble.innerHTML='<div class="typing"><span></span><span></span><span></span></div>';
+  row.appendChild(av); row.appendChild(bubble); container.appendChild(row);
+  container.scrollTop=container.scrollHeight;
+  return id;
+}
+function removeTyping(id) { document.getElementById(id)?.remove(); }
+
+function setLoading(on, msg) {
+  document.getElementById('send-btn').disabled = on;
+  if (on) setStatusPill('loading', msg||'Consultando...');
+  else setStatusPill(currentMode==='consulta'?'consulta':'online', currentMode==='consulta'?'Consulta':'Online');
+}
+
+function setStatusPill(type, text) {
+  const pill = document.getElementById('status-pill');
+  const dot = document.getElementById('sdot');
+  const span = document.getElementById('status-text');
+  pill.className = `status-pill ${type}`;
+  dot.className = `sdot ${type}`;
+  span.textContent = text;
+}
+
+function handleKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} }
+function autoResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,120)+'px'; }
+
+function formatReplyMd(text) { return formatReply(text); }
+
+// ═══════════════════════════════════════════════════════
+// MODE / SCOPE
+// ═══════════════════════════════════════════════════════
+function setMode(mode) {
+  currentMode = mode;
+  const isC = mode==='consulta';
+  document.getElementById('tab-atend').classList.toggle('active',!isC);
+  document.getElementById('tab-cons').classList.toggle('active',isC);
+  document.getElementById('msgs-atend').parentElement.style.display = isC ? 'none' : 'flex';
+  document.getElementById('consulta-wrap').style.display = isC ? 'flex' : 'none';
+  document.getElementById('ticket-banner').classList.toggle('hidden',isC);
+  const eb = document.getElementById('end-btn');
+  if (isC) {
+    setStatusPill('consulta','Consulta');
+    eb.className='end-btn consulta'; eb.textContent='Encerrar consulta'; eb.onclick=openModalConsulta;
+    document.getElementById('chat-title').textContent='Consulta · '+currentScope;
+    document.getElementById('chat-sub').textContent='Consulta livre · Sem ticket obrigatório';
+    document.getElementById('hint-area').innerHTML='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Consulta livre <span class="hbadge c">Sem ticket</span>';
+    setConsultaTab('chat');
+  } else {
+    setStatusPill('online','Online');
+    eb.className='end-btn atend'; eb.textContent='Encerrar'; eb.onclick=openModal;
+    document.getElementById('chat-title').textContent='Agente '+currentScope;
+    document.getElementById('chat-sub').textContent='Atendimento · Jira · Movidesk · Docs';
+    document.getElementById('hint-area').innerHTML='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg> Jira · Movidesk · Docs';
+  }
+}
+
+function setConsultaTab(tab) {
+  document.getElementById('ctab-chat').classList.toggle('active',tab==='chat');
+  document.getElementById('ctab-docs').classList.toggle('active',tab==='docs');
+  document.getElementById('msgs-consulta').style.display=tab==='chat'?'flex':'none';
+  document.getElementById('docs-panel').style.display=tab==='docs'?'block':'none';
+}
+
+function setScope(el, name) {
+  currentScope = name;
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+  if (currentMode==='atendimento') document.getElementById('chat-title').textContent='Agente '+name;
+  else document.getElementById('chat-title').textContent='Consulta · '+name;
+  refreshDocsPanel();
+  // Atualizar welcome se não há mensagens do usuário ainda
+  const msgs = document.getElementById('msgs-atend');
+  if (msgs && msgs.querySelectorAll('.msg-row.user').length === 0 && !ticketLinked) {
+    msgs.innerHTML = `<div class="msg-row"><div class="msg-av agent" style="padding:5px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="bubble agent">${buildWelcomeMsg(name)}</div></div>`;
+  }
+}
+
+function selectSpill(el, scope) {
+  document.querySelectorAll('.spill').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  currentScope = scope;
+  document.getElementById('chat-title').textContent=(currentMode==='consulta'?'Consulta · ':'Agente ')+scope;
+  // Sync sidebar nav
+  document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+  const map = {'Telemetria':'nav-telemetria','SCDE':'nav-scde','Setorial':'nav-setorial','Gestão de Faturas':'nav-faturas','Base Geral':'nav-geral','Sobre o Agente':'nav-agente'};
+  const navEl = document.getElementById(map[scope]);
+  if (navEl) navEl.classList.add('active');
+  refreshDocsPanel();
+}
+
+function novaSession() {
+  ticketLinked=false; ticketData=null; conversationHistory=[]; selectedResOption=null;
+  desvincularTicket();
+  document.getElementById('waiting-overlay').style.display='none';
+  document.getElementById('msgs-atend').innerHTML=`
+    <div class="msg-row">
+      <div class="msg-av agent" style="background:transparent;padding:1px">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="28" height="28">
+  <!-- Anel externo -->
+  <path d="M16 2 A14 14 0 1 1 15.99 2 Z" fill="none" stroke="#F5A623" stroke-width="3.5" opacity="0.3"/>
+  <!-- Arco superior preenchido (aprox 3/4 do círculo) -->
+  <path d="M16 2 A14 14 0 1 1 3.5 21" fill="none" stroke="#F5A623" stroke-width="3.5" stroke-linecap="round"/>
+  <!-- Barras internas -->
+  <rect x="9" y="14" width="3.5" height="8" rx="1.2" fill="#F5A623"/>
+  <rect x="14.2" y="10" width="3.5" height="12" rx="1.2" fill="#F5A623"/>
+  <rect x="19.5" y="12" width="3.5" height="10" rx="1.2" fill="#F5A623"/>
+</svg>
+      </div>
+      <div class="bubble agent" id="welcome-bubble">
+        ${buildWelcomeMsg(currentScope)}
+      </div>
+    </div>`;
+  setMode('atendimento');
+}
+
+// ═══════════════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════════════
+function openModal() { document.getElementById('modal').classList.add('open'); }
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function openModalConsulta() {
+  const session = { id:Date.now(), scope:currentScope, ticket:null, subject:'Consulta livre', type:'consulta', timestamp:new Date().toISOString(), status:'resolved', user:currentUser?.name||'—' };
+  sessions.push(session); storage.set('ph_sessions',sessions);
+  renderSessions(); updateAdminKPIs(); setMode('atendimento');
+}
+
+function selectResOption(opt) {
+  selectedResOption = opt;
+  document.getElementById('opt-agent').className='res-option'+(opt==='agent'?' sel-agent':'');
+  document.getElementById('opt-own').className='res-option'+(opt==='own'?' sel-own':'');
+  document.getElementById('obs-agent-wrap').style.display=opt==='agent'?'block':'none';
+  document.getElementById('desc-own-wrap').style.display=opt==='own'?'block':'none';
+}
+
+// ═══════════════════════════════════════════════════════
+// ADMIN
+// ═══════════════════════════════════════════════════════
+function openAdmin() {
+  document.getElementById('admin-overlay').classList.add('open');
+  const lbl = document.getElementById('admin-user-label');
+  if (lbl && currentUser) lbl.textContent = currentUser.name + ' · ' + (currentUser.role==='admin'?'Admin':'Analista');
+  // reset to dashboard
+  setAdminTab('dashboard');
+  updateAdminKPIs(); renderFlags(); renderUsersAdmin();
+}
+function closeAdmin() { document.getElementById('admin-overlay').classList.remove('open'); }
+
+const ADMIN_TABS = ['dashboard','docs','tokens','movidesk','usuarios','flags'];
+function setAdminTab(tab) {
+  ADMIN_TABS.forEach(t => {
+    const nav = document.getElementById('anav-'+t);
+    const view = document.getElementById('view-'+t);
+    if (nav) nav.classList.toggle('active', t===tab);
+    if (view) { view.style.display = t===tab ? 'block' : 'none'; }
+  });
+  if (tab === 'flags') renderFlags();
+  if (tab === 'usuarios') renderUsersAdmin();
+  if (tab === 'movidesk') renderMvFieldsPreview();
+}
+
+function selectEngine(eng) {
+  currentEngine = eng; storage.set('ph_engine', eng);
+  ['gemini','anthropic','openai'].forEach(e => {
+    const el = document.getElementById('eng-'+e);
+    if (!el) return;
+    el.classList.toggle('active', e===eng);
+    const sub = el.querySelector('.engine-opt-sub');
+    if (sub) sub.textContent = e===eng ? 'Ativo' : (e==='gemini'?'Piloto':'Futuro');
+  });
+}
+
+function saveToken(type) {
+  const input = document.getElementById('token-'+type);
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) return;
+  storage.set('ph_token_'+type, val);
+  updateTokenStatus(type, true);
+}
+
+function updateTokenStatus(type, ok) {
+  const badge = document.getElementById('status-'+type);
+  if (!badge) return;
+  if (ok) {
+    badge.style.background='var(--green-bg)'; badge.style.borderColor='var(--green-border)'; badge.style.color='var(--green)'; badge.textContent='✓ Configurado';
+  } else {
+    badge.style.background='var(--amber-bg)'; badge.style.borderColor='var(--amber-border)'; badge.style.color='var(--amber)'; badge.textContent='⏳ Aguardando';
+  }
+}
+
+function toggleTokenVisibility(type) {
+  const input = document.getElementById('token-'+type);
+  if (!input) return;
+  input.type = input.type==='password'?'text':'password';
+}
+
+function checkTokenStatus(type) {
+  const input = document.getElementById('token-'+type);
+  if (input?.value?.trim()) updateTokenStatus(type, true);
+}
+
+
+// ═══════════════════════════════════════════════════════
+// NOT FOUND — BANNER E SINALIZAÇÃO
+// ═══════════════════════════════════════════════════════
+function showNotFoundBanner(query) {
+  const isAtend = currentMode === 'atendimento';
+  const container = isAtend ? document.getElementById('msgs-atend') : document.getElementById('msgs-consulta');
+
+  const bannerId = 'nfb-' + Date.now();
+  const actionsHtml = isAtend
+    ? `<button class="nfb-btn primary" onclick="startWaiting('${bannerId}','${query.replace(/'/g,"\\'")}')">⏳ Aguardar e registrar depois</button>
+       <button class="nfb-btn secondary" onclick="document.getElementById('${bannerId}').remove()">Ignorar</button>`
+    : `<button class="nfb-btn purple" onclick="openSuggestModal('${query.replace(/'/g,"\\'")}')">💡 Informar ao Admin</button>
+       <button class="nfb-btn secondary" onclick="document.getElementById('${bannerId}').remove()">Ignorar</button>`;
+
+  const row = document.createElement('div');
+  row.id = bannerId;
+  row.innerHTML = `
+    <div class="not-found-banner">
+      <div class="nfb-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Não encontrado nas fontes disponíveis
+      </div>
+      <div class="nfb-desc">${isAtend
+        ? 'O agente não localizou documentação para esse problema. Você pode aguardar uma resolução externa e registrá-la ao final — ela ficará disponível para consultas futuras.'
+        : 'O agente não encontrou esse conteúdo na base. Você pode informar ao Admin para que o conteúdo seja incluído.'
+      }</div>
+      <div class="nfb-actions">${actionsHtml}</div>
+    </div>`;
+  container.appendChild(row);
+  container.scrollTop = container.scrollHeight;
+}
+
+function startWaiting(bannerId, query) {
+  document.getElementById(bannerId)?.remove();
+  // Criar flag para o admin
+  createFlag({
+    type: 'gap',
+    mode: 'atendimento',
+    scope: currentScope,
+    ticket: ticketData?.id || null,
+    query,
+    user: currentUser?.name || '—',
+    userEmail: currentUser?.email || '—',
+    status: 'pending',
+    timestamp: new Date().toISOString()
+  });
+  setWaiting(true);
+  addMsg('agent', `<div style="font-size:12px;color:var(--amber)">⏳ Chat em espera. Quando resolver, clique em <strong>Registrar resolução</strong> — ela será salva como nota interna no ticket e ficará disponível para consultas futuras.</div>`, 'system');
+}
+
+// ── Suggest modal (Modo Consulta) ────────────────────────────────
+function openSuggestModal(query) {
+  document.getElementById('suggest-text').value = query ? `Busca: "${query}"\n\nSugestão: ` : '';
+  document.getElementById('suggest-modal-overlay').classList.add('open');
+}
+function closeSuggestModal() { document.getElementById('suggest-modal-overlay').classList.remove('open'); }
+function selectSuggestType(type) {
+  suggestType = type;
+  document.getElementById('sm-type-suggest').classList.toggle('active', type === 'suggest');
+  document.getElementById('sm-type-gap').classList.toggle('active', type === 'gap');
+}
+function submitSuggestion() {
+  const text = document.getElementById('suggest-text').value.trim();
+  if (!text) { alert('Descreva o que deseja informar ao Admin.'); return; }
+  createFlag({
+    type: suggestType,
+    mode: 'consulta',
+    scope: currentScope,
+    ticket: null,
+    query: text,
+    user: currentUser?.name || '—',
+    userEmail: currentUser?.email || '—',
+    status: 'pending',
+    timestamp: new Date().toISOString()
+  });
+  closeSuggestModal();
+  addMsg('agent', '<div style="font-size:12px;color:var(--green)">✅ Sinalização enviada ao Admin. Obrigado pela contribuição!</div>', 'system');
+}
+
+// ── Flags core ────────────────────────────────────────────────────
+function createFlag(flag) {
+  flag.id = Date.now();
+  flags.push(flag);
+  storage.set('ph_flags', flags);
+  updateFlagsBadge();
+  renderFlags();
+}
+
+function updateFlagsBadge() {
+  const pending = flags.filter(f => f.status === 'pending').length;
+  const badge = document.getElementById('flags-badge');
+  if (!badge) return;
+  badge.style.display = pending > 0 ? 'inline-flex' : 'none';
+  badge.textContent = pending;
+}
+
+function renderFlags() {
+  const pending = flags.filter(f => f.status === 'pending');
+  const resolved = flags.filter(f => f.status !== 'pending');
+  const typeLabel = t => t === 'suggest' ? '💡 Sugestão' : '⚠️ Lacuna';
+  const modeLabel = m => m === 'atendimento' ? 'Atendimento' : 'Consulta';
+
+  const renderCard = (f, i) => `
+    <div class="flag-card ${f.status}" id="flag-${f.id}">
+      <div class="flag-header">
+        <div class="flag-title">${typeLabel(f.type)} · ${f.scope} · ${modeLabel(f.mode)}${f.ticket ? ` · MV-${f.ticket}` : ''}</div>
+        <span class="flag-badge ${f.status}">${f.status === 'pending' ? 'Pendente' : 'Resolvida'}</span>
+      </div>
+      <div class="flag-meta">${f.user} · ${new Date(f.timestamp).toLocaleDateString('pt-BR')} ${new Date(f.timestamp).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
+      <div class="flag-desc">${f.query}</div>
+      ${f.status === 'pending' ? `<div class="flag-actions">
+        <button class="flag-resolve-btn" onclick="resolveFlag(${f.id})">Marcar como resolvida</button>
+        <button class="flag-dismiss-btn" onclick="dismissFlag(${f.id})">Dispensar</button>
+      </div>` : f.adminNote ? `<div style="font-size:10px;color:var(--text-3);margin-top:6px">Nota: ${f.adminNote}</div>` : ''}
+    </div>`;
+
+  const pList = document.getElementById('flags-pending-list');
+  const rList = document.getElementById('flags-resolved-list');
+  if (pList) pList.innerHTML = pending.length ? pending.map(renderCard).join('') : '<div style="color:var(--text-3);font-size:12px;padding:8px 0">Nenhuma sinalização pendente.</div>';
+  if (rList) rList.innerHTML = resolved.length ? resolved.slice().reverse().slice(0,10).map(renderCard).join('') : '<div style="color:var(--text-3);font-size:12px;padding:8px 0">Nenhuma sinalização resolvida ainda.</div>';
+}
+
+function resolveFlag(id) {
+  const f = flags.find(f => f.id === id);
+  if (f) { f.status = 'resolved'; f.resolvedAt = new Date().toISOString(); f.resolvedBy = currentUser?.name || '—'; }
+  storage.set('ph_flags', flags);
+  updateFlagsBadge();
+  renderFlags();
+}
+function dismissFlag(id) {
+  const f = flags.find(f => f.id === id);
+  if (f) { f.status = 'dismissed'; f.resolvedAt = new Date().toISOString(); }
+  storage.set('ph_flags', flags);
+  updateFlagsBadge();
+  renderFlags();
+}
+
+// ═══════════════════════════════════════════════════════
+// USERS ADMIN
+// ═══════════════════════════════════════════════════════
+function renderUsersAdmin() {
+  const tbody = document.getElementById('users-tbody');
+  if (!tbody) return;
+  const knownUsers = storage.get('ph_known_users') || [];
+  if (!knownUsers.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-3);text-align:center;padding:16px;font-size:12px">Nenhum usuário registrado ainda.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = knownUsers.map(u => {
+    const isMe = u.email === currentUser?.email;
+    const initials = u.name.split(' ').map(p=>p[0]).join('').substring(0,2).toUpperCase();
+    return `<tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="user-av" style="background:${u.role==='admin'?'var(--accent)':'var(--blue)'}">${initials}</div>
+          <div>
+            <div style="font-size:12px;font-weight:500;color:var(--text)">${u.name}${isMe?' <span style="font-size:9px;color:var(--text-3)">(você)</span>':''}</div>
+            <div style="font-size:10px;color:var(--text-3)">${u.email}</div>
+          </div>
+        </div>
+      </td>
+      <td><span class="user-role-badge ${u.role}">${u.role === 'admin' ? 'Admin' : 'Analista'}</span></td>
+      <td style="font-size:10px;color:var(--text-3)">${u.firstLogin ? new Date(u.firstLogin).toLocaleDateString('pt-BR') : '—'}</td>
+      <td>
+        ${!isMe && u.role !== 'admin' ? `<button class="user-promote-btn" onclick="promoteUser('${u.email}')">Tornar Admin</button>` : ''}
+        ${!isMe && u.role === 'admin' ? `<button class="user-demote-btn" onclick="demoteUser('${u.email}')">Rebaixar</button>` : ''}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function promoteUser(email) {
+  const users = storage.get('ph_known_users') || [];
+  const u = users.find(u => u.email === email);
+  if (u) { u.role = 'admin'; storage.set('ph_known_users', users); renderUsersAdmin(); }
+}
+function demoteUser(email) {
+  if (!confirm('Rebaixar este usuário para Analista?')) return;
+  const users = storage.get('ph_known_users') || [];
+  const u = users.find(u => u.email === email);
+  if (u) { u.role = 'analista'; storage.set('ph_known_users', users); renderUsersAdmin(); }
+}
+
+
+// ═══════════════════════════════════════════════════════
+// MOVIDESK — CAMPOS (Serviços, Categorias, Urgências)
+// ═══════════════════════════════════════════════════════
+let mvFields = { services: [], categories: [], urgencies: [], fetchedAt: null };
+
+async function fetchMovideskFields() {
+  const token = storage.get('ph_token_movidesk') || MOVIDESK_TOKEN_DEFAULT;
+  const btn = document.getElementById('fetch-mv-btn');
+  const status = document.getElementById('mv-fields-status');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="animation:spin .8s linear infinite"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg> Buscando...'; }
+  if (status) status.textContent = 'Consultando API do Movidesk...';
+
+  try {
+    // Buscar serviços
+    const svcResp = await fetch(`${MOVIDESK_BASE}/services?token=${token}&$select=id,name,parentServiceId,defaultCategory,defaultUrgency,categories,isActive&$filter=isActive eq true`, { headers: { 'Accept': 'application/json' } });
+    let services = [];
+    if (svcResp.ok) { services = await svcResp.json(); }
+
+    // Buscar urgências via tickets API
+    const urgResp = await fetch(`${MOVIDESK_BASE}/tickets/urgencies?token=${token}`, { headers: { 'Accept': 'application/json' } });
+    let urgencies = [];
+    if (urgResp.ok) { urgencies = await urgResp.json(); }
+
+    // Buscar categorias via tickets API
+    const catResp = await fetch(`${MOVIDESK_BASE}/tickets/categories?token=${token}`, { headers: { 'Accept': 'application/json' } });
+    let categories = [];
+    if (catResp.ok) { categories = await catResp.json(); }
+
+    mvFields = { services, categories, urgencies, fetchedAt: new Date().toISOString() };
+    storage.set('ph_mv_fields', mvFields);
+
+    if (status) status.innerHTML = `<span style="color:var(--green)">✓ Atualizado em ${new Date().toLocaleString('pt-BR')} — ${services.length} serviços, ${categories.length} categorias, ${urgencies.length} urgências</span>`;
+    renderMvFieldsPreview();
+  } catch(e) {
+    if (status) status.innerHTML = `<span style="color:var(--red)">⚠ Erro ao buscar: ${e.message}</span>`;
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg> Buscar do Movidesk agora'; }
+  }
+}
+
+function renderMvFieldsPreview() {
+  const saved = storage.get('ph_mv_fields');
+  if (saved) mvFields = saved;
+  const el = document.getElementById('mv-fields-preview');
+  const status = document.getElementById('mv-fields-status');
+  if (!el) return;
+  if (!mvFields.services?.length) {
+    el.innerHTML = '<div style="color:var(--text-3);font-size:12px">Nenhum campo carregado. Clique em "Buscar do Movidesk agora".</div>';
+    return;
+  }
+  if (status && mvFields.fetchedAt) {
+    status.innerHTML = `<span style="color:var(--green)">✓ Último fetch: ${new Date(mvFields.fetchedAt).toLocaleString('pt-BR')} — ${mvFields.services.length} serviços</span>`;
+  }
+  // Montar árvore de serviços
+  const roots = mvFields.services.filter(s => !s.parentServiceId);
+  const children = id => mvFields.services.filter(s => s.parentServiceId === id);
+  const renderSvc = (s, depth=0) => {
+    const cats = s.categories?.length ? s.categories.join(', ') : s.defaultCategory || '—';
+    const urg = s.defaultUrgency || '—';
+    const ch = children(s.id);
+    return `<div style="padding:6px 10px ${ch.length?'2px':'6px'} ${10+depth*16}px;border-left:${depth>0?'2px solid var(--border)':'none'};margin-left:${depth>0?'10px':'0'};${depth===0?'background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-xs);margin-bottom:6px':''}">
+      <div style="font-size:12px;font-weight:${depth===0?'600':'500'};color:${depth===0?'var(--text)':'var(--text-2)'};">${s.name}</div>
+      <div style="font-size:10px;color:var(--text-3);margin-top:1px">Categorias: ${cats} · Urgência padrão: ${urg}</div>
+      ${ch.map(c => renderSvc(c, depth+1)).join('')}
+    </div>`;
+  };
+  el.innerHTML = roots.map(s => renderSvc(s)).join('') ||
+    `<div style="font-size:12px;color:var(--text-2)">${mvFields.services.map(s=>`<div style="padding:4px 0;border-bottom:1px solid var(--border)">${s.name} — ${s.defaultCategory||'sem categoria'}</div>`).join('')}</div>`;
+}
+
+function getMvFieldsContext() {
+  const saved = storage.get('ph_mv_fields');
+  if (!saved?.services?.length) return '';
+  const services = saved.services.map(s => `- ${s.name}${s.parentServiceId?` (sub de ${saved.services.find(p=>p.id===s.parentServiceId)?.name||'?'})`:''}: categorias=[${(s.categories||[s.defaultCategory]).filter(Boolean).join(', ')}], urgência padrão=${s.defaultUrgency||'?'}`).join('\n');
+  const cats = saved.categories?.length ? saved.categories.join(', ') : '';
+  const urgs = saved.urgencies?.length ? saved.urgencies.join(', ') : '';
+  return `\n[CATÁLOGO MOVIDESK — use para SUGESTÃO DE CLASSIFICAÇÃO]\nServiços disponíveis:\n${services}${cats?'\nCategorias: '+cats:''}${urgs?'\nUrgências: '+urgs:''}`;
+}
+
+function renderSessions() {
+  const list = document.getElementById('sessions-list');
+  if (!sessions.length) { list.innerHTML='<div class="sess-item" style="color:#3D5068;font-style:italic">Nenhuma sessão ainda</div>'; return; }
+  list.innerHTML = sessions.slice(-6).reverse().map(s=>`
+    <div class="sess-item ${s.status==='waiting'?'wait':'ok'}">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="${s.status==='waiting'?'#FCD34D':'#4ADE80'}" stroke="none"><circle cx="12" cy="12" r="10"/></svg>
+      ${(s.subject||s.scope).substring(0,26)}
+    </div>`).join('');
+}
+
+function updateAdminKPIs() {
+  const total = sessions.filter(s=>s.status==='resolved').length;
+  const waiting = sessions.filter(s=>s.status==='waiting').length;
+  const agentR = sessions.filter(s=>s.type==='agent').length;
+  const pct = total>0 ? Math.round(agentR/total*100)+'%' : '—';
+  document.getElementById('kpi-total').textContent=total;
+  document.getElementById('kpi-pct').textContent=pct;
+  document.getElementById('kpi-espera').textContent=waiting;
+  const list = document.getElementById('res-list-admin');
+  const sub = document.getElementById('res-subtitle');
+  if (!sessions.length) { list.innerHTML='<div style="color:var(--text-3);font-size:12px;padding:8px 0">Nenhuma resolução registrada ainda.</div>'; sub.textContent=''; return; }
+  sub.textContent=`— ${sessions.length} registrada${sessions.length!==1?'s':''}`;
+  list.innerHTML=sessions.slice().reverse().slice(0,5).map(s=>`
+    <div class="res-card">
+      <div class="rsd" style="background:${s.status==='waiting'?'var(--amber)':s.type==='agent'?'var(--green)':'var(--purple)'}"></div>
+      <div class="rsc">
+        <div class="rsc-title">${s.subject||s.scope}</div>
+        <div class="rsc-meta">${s.scope} · ${new Date(s.timestamp).toLocaleDateString('pt-BR')} · ${s.user||'—'}${s.ticket?` · <strong>MV-${s.ticket}</strong>`:''}</div>
+      </div>
+      <div class="rsc-actions">
+        <span class="pill ${s.status==='waiting'?'waiting':s.type==='agent'?'agent':s.type==='consulta'?'own':'own'}">${s.status==='waiting'?'Espera':s.type==='agent'?'Agente':s.type==='consulta'?'Consulta':'Própria'}</span>
+      </div>
+    </div>`).join('');
+}
+
+function loadAdminData() { updateAdminKPIs(); renderDocsAdmin(); }
+
+// ═══════════════════════════════════════════════════════
+// DOCS
+// ═══════════════════════════════════════════════════════
+function refreshDocsPanel() {
+  const panel = document.getElementById('docs-panel');
+  const scopeDocs = allDocs.filter(d=>d.scope===currentScope);
+  if (!scopeDocs.length) { panel.innerHTML=`<div style="color:var(--text-3);font-size:12px;text-align:center;padding:30px 0">Nenhum documento disponível para ${currentScope}</div>`; return; }
+  const grouped = {};
+  scopeDocs.forEach(d => { if(!grouped[d.scope]) grouped[d.scope]=[]; grouped[d.scope].push(d); });
+  panel.innerHTML = Object.entries(grouped).map(([scope,docs])=>`
+    <div class="docs-scope-label">${scope}</div>
+    ${docs.map(d=>`
+      <div class="doc-item" onclick="window.open('${d.url}','_blank')">
+        <div class="doc-icon" style="background:var(--blue-bg)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <div class="doc-info">
+          <div class="doc-name">${d.name}</div>
+          <div class="doc-meta">${d.scope}${d.keywords?.length?' · '+d.keywords.slice(0,3).join(', '):''}</div>
+        </div>
+        <button class="doc-open-btn" onclick="event.stopPropagation();window.open('${d.url}','_blank')">Abrir</button>
+      </div>`).join('')}`).join('');
+}
+
+function renderDocsAdmin() {
+  const list = document.getElementById('docs-admin-list');
+  if (!allDocs.length) { list.innerHTML='<div style="color:var(--text-3);font-size:12px">Nenhum documento cadastrado.</div>'; return; }
+  list.innerHTML = allDocs.map((d,i)=>`
+    <div class="doc-admin-item">
+      <div class="doc-admin-info">
+        <div class="doc-admin-name">${d.name} <span class="scope-badge">${d.scope}</span></div>
+        <div class="doc-admin-meta">${d.keywords?.join(', ')||'—'}</div>
+      </div>
+      <div class="doc-admin-actions">
+        <button class="doc-del-btn" onclick="removeDoc(${i})">Remover</button>
+      </div>
+    </div>`).join('');
+}
+
+function addDoc() {
+  const name = document.getElementById('new-doc-name').value.trim();
+  const scope = document.getElementById('new-doc-scope').value;
+  const url = document.getElementById('new-doc-url').value.trim();
+  const kw = document.getElementById('new-doc-kw').value.trim();
+  if (!name||!url) { alert('Nome e URL são obrigatórios.'); return; }
+  allDocs.push({ name, scope, url, keywords: kw.split(',').map(k=>k.trim()).filter(Boolean) });
+  storage.set('ph_docs', allDocs);
+  document.getElementById('new-doc-name').value=''; document.getElementById('new-doc-url').value=''; document.getElementById('new-doc-kw').value='';
+  renderDocsAdmin(); refreshDocsPanel();
+}
+
+function removeDoc(i) {
+  if (!confirm('Remover este documento?')) return;
+  allDocs.splice(i,1); storage.set('ph_docs',allDocs); renderDocsAdmin(); refreshDocsPanel();
+}
+</script>
+</body>
+</html>
